@@ -10,36 +10,61 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
+import sys
+from datetime import timedelta
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load environment variables from backend/.env with UTF-8 encoding
+load_dotenv(BASE_DIR / '.env', encoding='utf-8')
 
-# Quick-start development settings - unsuitable for production
+# Add 'apps' folder to Python path so Django can locate internal apps cleanly
+sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
+
+
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-0z7si)oqcs@%-7+ii3-b2bi4^3188art+1uuscuj$=y*bee3c%'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-0z7si)oqcs@%-7+ii3-b2bi4^3188art+1uuscuj$=y*bee3c%')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']  # Adjust in production
 
 
 # Application definition
 
 INSTALLED_APPS = [
+
+    # Default Django Apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Third-Party Apps
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'corsheaders',
+    'djoser',
+    'drf_spectacular',
+
+    # Local Apps
+    'apps.users',
+    #'apps.courses',
+    #'apps.quizzes',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -58,6 +83,7 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -69,19 +95,29 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
+# -----------------------------------------------------------------------------
+# DATABASE CONFIGURATION (PostgreSQL)
+# -----------------------------------------------------------------------------
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DB', 'emc_lms_db'),
+        'USER': os.getenv('POSTGRES_USER', 'postgres'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'postgres'),
+        'HOST': os.getenv('POSTGRES_HOST', '127.0.0.1'),  # Use 'db' if running inside Docker
+        'PORT': os.getenv('POSTGRES_PORT', '5432'),
     }
 }
 
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
+
+# -----------------------------------------------------------------------------
+# AUTHENTICATION & CUSTOM USER MODEL
+# -----------------------------------------------------------------------------
+# Point Django to your custom user model inside apps/users/models.py
+AUTH_USER_MODEL = 'users.Utilisateur'
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -98,16 +134,96 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# -----------------------------------------------------------------------------
+# Real Email Configuration (SMTP)
+# -----------------------------------------------------------------------------
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+
+DEFAULT_FROM_EMAIL = f'Espace Maroc Cyberconfiance <{EMAIL_HOST_USER}>'
+
+# -----------------------------------------------------------------------------
+# DJOSER & SIMPLE JWT CONFIGURATION
+# -----------------------------------------------------------------------------
+DJOSER = {
+    'LOGIN_FIELD': 'email',
+    'USER_CREATE_PASSWORD_RETYPE': True,
+
+    # --- Account Activation ---
+    'SEND_ACTIVATION_EMAIL': True,
+    'ACTIVATION_URL': 'activate/{uid}/{token}',  # React route: http://localhost:5173/activate/uid/token
+
+    # --- Password Reset ---
+    'PASSWORD_RESET_CONFIRM_URL': 'password/reset/confirm/{uid}/{token}',  # React route
+    'PASSWORD_RESET_CONFIRM_RETYPE': True,
+
+    # Optional: Send email confirmation after success
+    'SEND_CONFIRMATION_EMAIL': True,
+
+    'SITE_NAME': 'Espace Maroc Cyberconfiance',
+    'DOMAIN': 'localhost:5173',  # React Vite Frontend URL
+    'TOKEN_MODEL': None,         # Using JWT
+
+    'SERIALIZERS': {
+        'user_create': 'apps.users.serializers.CustomUserCreateSerializer',
+        'user': 'apps.users.serializers.CustomUserSerializer',
+        'current_user': 'apps.users.serializers.CustomUserSerializer',
+    },
+}
+
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema', # <--- Add this line
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+}
+
+# Swagger Metadata Settings
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'EMC Cyberconfiance LMS API',
+    'DESCRIPTION': 'API backend for Espace Maroc Cyberconfiance LMS platform.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    # Enables JWT Bearer authentication button in Swagger UI
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,
+    },
+}
+
+SIMPLE_JWT = {
+    'TOKEN_OBTAIN_SERIALIZER': 'apps.users.serializers.CustomTokenObtainPairSerializer',
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+# -----------------------------------------------------------------------------
+# CORS CONFIGURATION (Frontend React / Vite)
+# -----------------------------------------------------------------------------
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # Vite default port
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",  # Alternative React dev port
+]
+
+CORS_ALLOW_CREDENTIALS = True
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
-
+LANGUAGE_CODE = 'fr-fr'
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
 
@@ -115,3 +231,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
