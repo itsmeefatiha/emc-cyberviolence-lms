@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'djoser',
+    'drf_spectacular',
 
     # Local Apps
     'apps.users',
@@ -148,12 +149,26 @@ DJOSER = {
 }
 
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema', # <--- Add this line
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+}
+
+# Swagger Metadata Settings
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'EMC Cyberconfiance LMS API',
+    'DESCRIPTION': 'API backend for Espace Maroc Cyberconfiance LMS platform.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    # Enables JWT Bearer authentication button in Swagger UI
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,
+    },
 }
 
 SIMPLE_JWT = {
