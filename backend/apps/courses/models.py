@@ -2,7 +2,7 @@ import uuid
 from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from apps.users.models import ProfilProfessionnel
+from apps.users.models import Utilisateur
 
 # ==========================================
 # 1. ENUMS / CHOICES
@@ -28,8 +28,8 @@ class Parcours(models.Model):
 
     profil_cible = models.CharField(
         max_length=50,
-        choices=ProfilProfessionnel.choices,
-        default=ProfilProfessionnel.EDUCATEUR,
+        choices=Utilisateur.ProfilProfessionnel.choices,
+        default=Utilisateur.ProfilProfessionnel.EDUCATEUR,
         verbose_name=_('Profil Cible'),
     )
 
