@@ -134,6 +134,17 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# -----------------------------------------------------------------------------
+# Real Email Configuration (SMTP)
+# -----------------------------------------------------------------------------
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+
+DEFAULT_FROM_EMAIL = f'Espace Maroc Cyberconfiance <{EMAIL_HOST_USER}>'
 
 # -----------------------------------------------------------------------------
 # DJOSER & SIMPLE JWT CONFIGURATION
@@ -141,6 +152,22 @@ AUTH_PASSWORD_VALIDATORS = [
 DJOSER = {
     'LOGIN_FIELD': 'email',
     'USER_CREATE_PASSWORD_RETYPE': True,
+
+    # --- Account Activation ---
+    'SEND_ACTIVATION_EMAIL': True,
+    'ACTIVATION_URL': 'activate/{uid}/{token}',  # React route: http://localhost:5173/activate/uid/token
+
+    # --- Password Reset ---
+    'PASSWORD_RESET_CONFIRM_URL': 'password/reset/confirm/{uid}/{token}',  # React route
+    'PASSWORD_RESET_CONFIRM_RETYPE': True,
+
+    # Optional: Send email confirmation after success
+    'SEND_CONFIRMATION_EMAIL': True,
+
+    'SITE_NAME': 'Espace Maroc Cyberconfiance',
+    'DOMAIN': 'localhost:5173',  # React Vite Frontend URL
+    'TOKEN_MODEL': None,         # Using JWT
+
     'SERIALIZERS': {
         'user_create': 'apps.users.serializers.CustomUserCreateSerializer',
         'user': 'apps.users.serializers.CustomUserSerializer',
