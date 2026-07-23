@@ -14,9 +14,13 @@ import os
 import sys
 from datetime import timedelta
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from backend/.env with UTF-8 encoding
+load_dotenv(BASE_DIR / '.env', encoding='utf-8')
 
 # Add 'apps' folder to Python path so Django can locate internal apps cleanly
 sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
@@ -50,11 +54,12 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'djoser',
 
     # Local Apps
     'apps.users',
-    'apps.courses',
-    'apps.quizzes',
+    #'apps.courses',
+    #'apps.quizzes',
 ]
 
 MIDDLEWARE = [
@@ -130,8 +135,18 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # -----------------------------------------------------------------------------
-# DJANGO REST FRAMEWORK & SIMPLE JWT
+# DJOSER & SIMPLE JWT CONFIGURATION
 # -----------------------------------------------------------------------------
+DJOSER = {
+    'LOGIN_FIELD': 'email',
+    'USER_CREATE_PASSWORD_RETYPE': True,
+    'SERIALIZERS': {
+        'user_create': 'apps.users.serializers.CustomUserCreateSerializer',
+        'user': 'apps.users.serializers.CustomUserSerializer',
+        'current_user': 'apps.users.serializers.CustomUserSerializer',
+    },
+}
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -142,12 +157,12 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
+    'TOKEN_OBTAIN_SERIALIZER': 'apps.users.serializers.CustomTokenObtainPairSerializer',
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
-    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
 }
 
 # -----------------------------------------------------------------------------
