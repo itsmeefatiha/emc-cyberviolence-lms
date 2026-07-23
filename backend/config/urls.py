@@ -14,6 +14,9 @@ urlpatterns = [
     # Authentication & Users
     path('api/auth/', include('djoser.urls')),
     path('api/auth/', include('djoser.urls.jwt')),
+
+    # Courses
+    path('api/v1/courses/', include('apps.courses.urls')),
     
     # API Documentation (Swagger & Redoc)
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
