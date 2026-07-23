@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'apps.users',
     'apps.courses',
     #'apps.quizzes',
+    'apps.progression'
 ]
 
 MIDDLEWARE = [
