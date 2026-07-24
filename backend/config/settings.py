@@ -59,8 +59,9 @@ INSTALLED_APPS = [
 
     # Local Apps
     'apps.users',
-    #'apps.courses',
+    'apps.courses',
     #'apps.quizzes',
+    'apps.progression'
 ]
 
 MIDDLEWARE = [
