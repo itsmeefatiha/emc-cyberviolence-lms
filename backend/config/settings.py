@@ -80,7 +80,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -154,6 +154,11 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
     'USER_CREATE_PASSWORD_RETYPE': True,
 
+    # Frontend host used by Djoser's email context.
+    'EMAIL_FRONTEND_DOMAIN': 'localhost:5173',
+    'EMAIL_FRONTEND_SITE_NAME': 'Espace Maroc Cyberconfiance',
+    'EMAIL_FRONTEND_PROTOCOL': 'http',
+
     # --- Account Activation ---
     'SEND_ACTIVATION_EMAIL': True,
     'ACTIVATION_URL': 'activate/{uid}/{token}',  # React route: http://localhost:5173/activate/uid/token
@@ -165,8 +170,7 @@ DJOSER = {
     # Optional: Send email confirmation after success
     'SEND_CONFIRMATION_EMAIL': True,
 
-    'SITE_NAME': 'Espace Maroc Cyberconfiance',
-    'DOMAIN': 'localhost:5173',  # React Vite Frontend URL
+      # React Vite Frontend URL
     'TOKEN_MODEL': None,         # Using JWT
 
     'SERIALIZERS': {
