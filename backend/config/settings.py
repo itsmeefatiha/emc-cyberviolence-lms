@@ -59,7 +59,7 @@ INSTALLED_APPS = [
 
     # Local Apps
     'apps.users',
-    'apps.courses',
+    'apps.courses.apps.CoursesConfig',
     #'apps.quizzes',
     'apps.progression'
 ]

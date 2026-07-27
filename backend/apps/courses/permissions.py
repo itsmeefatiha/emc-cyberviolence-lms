@@ -36,5 +36,7 @@ class IsOwnerFormateurOrAdmin(permissions.BasePermission):
             return obj.parcours.formateur == request.user
         elif hasattr(obj, 'module'):  # Modèle Lecon
             return obj.module.parcours.formateur == request.user
+        elif hasattr(obj, 'lecon'):  # Modèles Contenu*
+            return obj.lecon.module.parcours.formateur == request.user
 
         return False
