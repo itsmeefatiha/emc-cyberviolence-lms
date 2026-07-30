@@ -170,8 +170,17 @@ class ContenuVideo(Contenu):
         PRÊT = 'PRET', _('Prêt')
         ECHEC = 'ECHEC', _('Échec de conversion')
 
-    url_stream = models.URLField(verbose_name=_('URL du flux vidéo'))
+    fichier_source = models.FileField(
+        upload_to='courses/videos/source/',
+        blank=True,
+        null=True,
+        verbose_name=_('Fichier source vidéo'),
+    )
+    url_stream = models.URLField(
+        blank=True, default='', verbose_name=_('URL du flux vidéo')
+    )
     duree = models.PositiveIntegerField(
+        default=0,
         help_text=_('Durée en secondes'), verbose_name=_('Durée (s)')
     )
     statut_encodage = models.CharField(
@@ -198,6 +207,12 @@ class ContenuSCORM(Contenu):
     )
     version = models.CharField(
         max_length=20, default='1.2', verbose_name=_('Version')
+    )
+    launch_path_url = models.CharField(
+        max_length=500,
+        blank=True,
+        default='',
+        verbose_name=_('URL de lancement'),
     )
 
     class Meta:
