@@ -6,7 +6,7 @@ import AuthButton from '../components/auth/AuthButton.jsx'
 import AuthField from '../components/auth/AuthField.jsx'
 import AuthLayout from '../components/auth/AuthLayout.jsx'
 import AuthIllustration from '../assets/illustration.svg'
-import { GraduationCap } from 'lucide-react'
+import { GraduationCap, Eye, EyeOff } from 'lucide-react'
 
 const initialFormState = {
   email: '',
@@ -23,6 +23,7 @@ export default function Login() {
   const [fieldErrors, setFieldErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState(null)
+  const [showPassword, setShowPassword] = useState(false)
   const banner = useMemo(() => {
     if (successMessage) {
       return {
@@ -159,17 +160,31 @@ return (
             />
           </AuthField>
 
-          <AuthField error={fieldErrors.password}>
-            <input
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-brand focus:ring-1 focus:ring-brand"
-              type="password"
-              name="password"
-              autoComplete="current-password"
-              placeholder="••••••••••••"
-              value={form.password}
-              onChange={handleChange}
-            />
-          </AuthField>
+          <AuthField label="Mot de passe" error={fieldErrors.password}>
+  <div className="relative">
+    <input
+      className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-4 pr-12 py-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-brand focus:ring-1 focus:ring-brand"
+      type={showPassword ? 'text' : 'password'}
+      name="password"
+      autoComplete="current-password"
+      placeholder="••••••••••••"
+      value={form.password}
+      onChange={handleChange}
+    />
+    <button
+      type="button"
+      onClick={() => setShowPassword((prev) => !prev)}
+      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+      aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+    >
+      {showPassword ? (
+        <EyeOff className="h-5 w-5" />
+      ) : (
+        <Eye className="h-5 w-5" />
+      )}
+    </button>
+  </div>
+</AuthField>
 
           <div className="flex items-center justify-between text-xs font-medium text-slate-500">
             <label className="flex cursor-pointer select-none items-center gap-2">

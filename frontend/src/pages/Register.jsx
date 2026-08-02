@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Eye, EyeOff, GraduationCap } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import AuthBanner from '../components/auth/AuthBanner.jsx'
 import AuthButton from '../components/auth/AuthButton.jsx'
 import AuthField from '../components/auth/AuthField.jsx'
 import AuthLayout from '../components/auth/AuthLayout.jsx'
 import AuthIllustration from '../assets/illustration.svg'
-import { GraduationCap } from 'lucide-react'
 
 const initialFormState = {
   first_name: '',
@@ -24,6 +24,10 @@ export default function Register() {
   const [fieldErrors, setFieldErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const successMessage = location.state?.successMessage ?? null
+
+  // États pour afficher/masquer chaque mot de passe
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const validate = () => {
     const nextErrors = {}
@@ -74,7 +78,7 @@ export default function Register() {
 
   const isBusy = loading || submitting
 
-return (
+  return (
     <AuthLayout
       illustration={
         <img
@@ -156,26 +160,47 @@ return (
 
           <div className="grid gap-4 sm:grid-cols-2">
             <AuthField error={fieldErrors.password}>
-              <input
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-brand focus:ring-1 focus:ring-brand"
-                type="password"
-                name="password"
-                autoComplete="new-password"
-                placeholder="Password"
-                value={form.password}
-                onChange={handleChange}
-              />
+              <div className="relative">
+                <input
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-4 pr-12 py-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-brand focus:ring-1 focus:ring-brand"
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  autoComplete="new-password"
+                  placeholder="Password"
+                  value={form.password}
+                  onChange={handleChange}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
             </AuthField>
+
             <AuthField error={fieldErrors.confirm_password}>
-              <input
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-brand focus:ring-1 focus:ring-brand"
-                type="password"
-                name="confirm_password"
-                autoComplete="new-password"
-                placeholder="Confirm Password"
-                value={form.confirm_password}
-                onChange={handleChange}
-              />
+              <div className="relative">
+                <input
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-4 pr-12 py-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-brand focus:ring-1 focus:ring-brand"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  name="confirm_password"
+                  autoComplete="new-password"
+                  placeholder="Confirm Password"
+                  value={form.confirm_password}
+                  onChange={handleChange}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
             </AuthField>
           </div>
 

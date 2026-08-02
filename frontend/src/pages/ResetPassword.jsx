@@ -1,13 +1,12 @@
 import { useMemo, useState } from 'react'
 import { Link as RouterLink, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { AlertCircle, CheckCircle2, Info } from 'lucide-react'
+import { CheckCircle2, Eye, EyeOff, GraduationCap, Info } from 'lucide-react'
 import { confirmPasswordReset } from '../api/auth.js'
 import AuthBanner from '../components/auth/AuthBanner.jsx'
 import AuthButton from '../components/auth/AuthButton.jsx'
 import AuthField from '../components/auth/AuthField.jsx'
 import AuthLayout from '../components/auth/AuthLayout.jsx'
 import AuthIllustration from '../assets/illustration.svg'
-import { GraduationCap } from 'lucide-react'
 
 const initialFormState = {
   new_password: '',
@@ -22,14 +21,21 @@ export default function ResetPassword() {
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
 
+  // États pour afficher/masquer chaque mot de passe
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
   const uid = searchParams.get('uid') || routeUid || ''
   const token = searchParams.get('token') || routeToken || ''
+
+  // Validations dynamiques du mot de passe
+  const isEightChars = form.new_password.length >= 8
+  const hasSpecialChar = /[^A-Za-z0-9]/.test(form.new_password)
 
   const validationError = useMemo(() => {
     if (!uid || !token) {
       return 'The reset link is missing required information.'
     }
-
     return null
   }, [token, uid])
 
@@ -47,8 +53,13 @@ export default function ResetPassword() {
       return
     }
 
-    if (form.new_password.length < 8) {
+    if (!isEightChars) {
       setError('Password must be at least 8 characters.')
+      return
+    }
+
+    if (!hasSpecialChar) {
+      setError('Password must contain at least one special character.')
       return
     }
 
@@ -74,9 +85,7 @@ export default function ResetPassword() {
     }
   }
 
-  const isEightChars = form.new_password.length >= 8
-
-return (
+  return (
     <AuthLayout
       illustration={
         <img
@@ -95,11 +104,11 @@ return (
     >
       <div>
         <div className="mb-8 flex items-center gap-2">
-                  <GraduationCap className="h-5 w-5 text-slate-500 stroke-[1.5]" />
-                  <span className="text-sm font-bold uppercase tracking-[0.18em] text-slate-500">
-                    EMC E-Formation
-                  </span>
-                </div>
+          <GraduationCap className="h-5 w-5 text-slate-500 stroke-[1.5]" />
+          <span className="text-sm font-bold uppercase tracking-[0.18em] text-slate-500">
+            EMC E-Formation
+          </span>
+        </div>
 
         <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
           Reset your password
@@ -110,42 +119,69 @@ return (
 
         <form className="mt-8 space-y-4" onSubmit={handleSubmit} noValidate>
           <AuthField label="New password">
-            <input
-              type="password"
-              value={form.new_password}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, new_password: event.target.value }))
-              }
-              autoComplete="new-password"
-              placeholder="Type your new password"
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-brand focus:ring-1 focus:ring-brand"
-            />
+            <div className="relative">
+              <input
+                type={showNewPassword ? 'text' : 'password'}
+                value={form.new_password}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, new_password: event.target.value }))
+                }
+                autoComplete="new-password"
+                placeholder="Type your new password"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-4 pr-12 py-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-brand focus:ring-1 focus:ring-brand"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword((prev) => !prev)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+                aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+              >
+                {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
           </AuthField>
 
+          {/* Encadré d'exigences du mot de passe */}
           <div className="rounded-2xl border border-slate-200 bg-brand-light/50 p-4 text-xs text-slate-600">
             <div className="flex items-center gap-2">
               <CheckCircle2 className={`h-4 w-4 shrink-0 ${isEightChars ? 'text-emerald-500' : 'text-slate-400'}`} />
-              <span className={isEightChars ? 'text-slate-700' : 'text-slate-500'}>
+              <span className={isEightChars ? 'font-medium text-slate-700' : 'text-slate-500'}>
                 Must be at least 8 characters.
               </span>
             </div>
-            <div className="mt-2 flex items-center gap-2 text-slate-500">
-              <Info className="h-4 w-4 shrink-0 text-slate-400" />
-              <span>Must contain one special character.</span>
+            <div className="mt-2 flex items-center gap-2">
+              {hasSpecialChar ? (
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+              ) : (
+                <Info className="h-4 w-4 shrink-0 text-slate-400" />
+              )}
+              <span className={hasSpecialChar ? 'font-medium text-slate-700' : 'text-slate-500'}>
+                Must contain one special character.
+              </span>
             </div>
           </div>
 
           <AuthField label="Confirm password">
-            <input
-              type="password"
-              value={form.confirm_password}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, confirm_password: event.target.value }))
-              }
-              autoComplete="new-password"
-              placeholder="Repeat your new password"
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-brand focus:ring-1 focus:ring-brand"
-            />
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={form.confirm_password}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, confirm_password: event.target.value }))
+                }
+                autoComplete="new-password"
+                placeholder="Repeat your new password"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-4 pr-12 py-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-brand focus:ring-1 focus:ring-brand"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((prev) => !prev)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+              >
+                {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
           </AuthField>
 
           <AuthBanner type={error ? 'error' : null} message={error} />
