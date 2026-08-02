@@ -49,6 +49,13 @@ class Parcours(models.Model):
         verbose_name=_('Formateur référent'),
     )
 
+    image = models.ImageField(
+        upload_to='parcours/covers/',
+        blank=True,
+        null=True,
+        verbose_name=_('Image de couverture'),
+    )
+
     ordre = models.PositiveIntegerField(default=1, verbose_name=_('Ordre'))
     date_creation = models.DateTimeField(
         auto_now_add=True, verbose_name=_('Date de création')
