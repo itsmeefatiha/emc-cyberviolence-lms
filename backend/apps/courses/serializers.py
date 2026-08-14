@@ -6,6 +6,7 @@ from .models import (
     Contenu,
     ContenuDocument,
     ContenuSCORM,
+    ContenuTexte,
     ContenuVideo,
     Lecon,
     Module,
@@ -17,11 +18,33 @@ from .services import process_scorm_package, process_video_content
 CONTENT_TYPE_DOCUMENT = 'DOCUMENT'
 CONTENT_TYPE_VIDEO = 'VIDEO'
 CONTENT_TYPE_SCORM = 'SCORM'
+CONTENT_TYPE_TEXTE = 'TEXTE'
 CONTENT_TYPE_CHOICES = (
     (CONTENT_TYPE_DOCUMENT, _('Document')),
     (CONTENT_TYPE_VIDEO, _('Vidéo')),
     (CONTENT_TYPE_SCORM, _('SCORM')),
+    (CONTENT_TYPE_TEXTE, _('Texte simple')),
 )
+
+
+def _filename_stem(name):
+    if not name:
+        return ''
+    base = getattr(name, 'name', name)
+    base = str(base).replace('\\', '/').split('/')[-1]
+    if '.' in base:
+        return base.rsplit('.', 1)[0]
+    return base
+
+
+def _filename_extension(name):
+    if not name:
+        return ''
+    base = getattr(name, 'name', name)
+    base = str(base).replace('\\', '/').split('/')[-1]
+    if '.' in base:
+        return base.rsplit('.', 1)[-1].upper()
+    return ''
 
 
 def _user_is_admin(user):
@@ -82,20 +105,14 @@ class ContenuDocumentSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if self.instance is None:
-            missing = []
-            if not attrs.get('titre_fichier'):
-                missing.append('titre_fichier')
             if not attrs.get('fichier'):
-                missing.append('fichier')
-            if not attrs.get('format'):
-                missing.append('format')
-            if missing:
                 raise serializers.ValidationError(
-                    {
-                        field: _('Ce champ est requis pour créer un contenu document.')
-                        for field in missing
-                    }
+                    {'fichier': _('Ce champ est requis pour créer un contenu document.')}
                 )
+            if not attrs.get('titre_fichier') and attrs.get('fichier'):
+                attrs['titre_fichier'] = _filename_stem(attrs['fichier']) or 'Document'
+            if not attrs.get('format') and attrs.get('fichier'):
+                attrs['format'] = _filename_extension(attrs['fichier']) or 'PDF'
         return attrs
 
     def validate_lecon(self, value):
@@ -109,6 +126,7 @@ class ContenuDocumentSerializer(serializers.ModelSerializer):
 
 class ContenuVideoSerializer(serializers.ModelSerializer):
     lecon = serializers.PrimaryKeyRelatedField(queryset=Lecon.objects.all())
+    url_stream = serializers.SerializerMethodField()
 
     class Meta:
         model = ContenuVideo
@@ -124,20 +142,26 @@ class ContenuVideoSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'url_stream', 'duree', 'statut_encodage', 'date_creation']
 
+    def get_url_stream(self, obj):
+        """Retourne une URL de lecture réelle (évite les faux chemins .m3u8)."""
+        stream = (obj.url_stream or '').strip()
+        if stream and not stream.lower().endswith('.m3u8'):
+            return stream
+        if obj.fichier_source:
+            try:
+                return obj.fichier_source.url
+            except ValueError:
+                return ''
+        return stream
+
     def validate(self, attrs):
         if self.instance is None:
-            missing = []
-            if not attrs.get('titre_fichier'):
-                missing.append('titre_fichier')
             if not attrs.get('fichier_source'):
-                missing.append('fichier_source')
-            if missing:
                 raise serializers.ValidationError(
-                    {
-                        field: _('Ce champ est requis pour créer une vidéo.')
-                        for field in missing
-                    }
+                    {'fichier_source': _('Ce champ est requis pour créer une vidéo.')}
                 )
+            if not attrs.get('titre_fichier') and attrs.get('fichier_source'):
+                attrs['titre_fichier'] = _filename_stem(attrs['fichier_source']) or 'Vidéo'
         return attrs
 
     def validate_lecon(self, value):
@@ -149,10 +173,18 @@ class ContenuVideoSerializer(serializers.ModelSerializer):
         return value
 
     @transaction.atomic
+    def create(self, validated_data):
+        instance = super().create(validated_data)
+        process_video_content(instance)
+        return instance
+
+    @transaction.atomic
     def update(self, instance, validated_data):
         fichier_source = validated_data.get('fichier_source')
         instance = super().update(instance, validated_data)
         if fichier_source is not None:
+            process_video_content(instance)
+        elif not instance.url_stream and instance.fichier_source:
             process_video_content(instance)
         return instance
 
@@ -207,6 +239,31 @@ class ContenuSCORMSerializer(serializers.ModelSerializer):
         return instance
 
 
+
+class ContenuTexteSerializer(serializers.ModelSerializer):
+    lecon = serializers.PrimaryKeyRelatedField(queryset=Lecon.objects.all())
+
+    class Meta:
+        model = ContenuTexte
+        fields = ['id', 'lecon', 'titre_fichier', 'corps', 'date_creation']
+        read_only_fields = ['id', 'date_creation']
+
+    def validate(self, attrs):
+        if self.instance is None and not attrs.get('corps'):
+            raise serializers.ValidationError(
+                {'corps': _('Le texte du contenu est requis.')}
+            )
+        return attrs
+
+    def validate_lecon(self, value):
+        request = self.context.get('request')
+        if request and not _can_manage_lecon(request.user, value):
+            raise serializers.ValidationError(
+                _('Vous ne pouvez pas rattacher ce contenu à cette leçon.')
+            )
+        return value
+
+
 class ContenuPolymorphicSerializer(serializers.ModelSerializer):
     """Identifie le sous-type réel de Contenu (Document, Video, SCORM)."""
 
@@ -224,6 +281,8 @@ class ContenuPolymorphicSerializer(serializers.ModelSerializer):
             return CONTENT_TYPE_VIDEO
         if hasattr(obj, 'contenuscorm'):
             return CONTENT_TYPE_SCORM
+        if hasattr(obj, 'contenutexte'):
+            return CONTENT_TYPE_TEXTE
         return 'GENERIC'
 
     def get_details(self, obj):
@@ -233,6 +292,8 @@ class ContenuPolymorphicSerializer(serializers.ModelSerializer):
             return ContenuVideoSerializer(obj.contenuvideo, context=self.context).data
         if hasattr(obj, 'contenuscorm'):
             return ContenuSCORMSerializer(obj.contenuscorm, context=self.context).data
+        if hasattr(obj, 'contenutexte'):
+            return ContenuTexteSerializer(obj.contenutexte, context=self.context).data
         return None
 
 
@@ -249,6 +310,7 @@ class LeconSerializer(serializers.ModelSerializer):
     contenu_package_url = serializers.FileField(required=False, write_only=True)
     contenu_standard = serializers.CharField(required=False, write_only=True)
     contenu_version = serializers.CharField(required=False, write_only=True)
+    contenu_corps = serializers.CharField(required=False, write_only=True, allow_blank=True)
 
     class Meta:
         model = Lecon
@@ -267,6 +329,7 @@ class LeconSerializer(serializers.ModelSerializer):
             'contenu_package_url',
             'contenu_standard',
             'contenu_version',
+            'contenu_corps',
         ]
 
     def validate_module(self, value):
@@ -286,6 +349,7 @@ class LeconSerializer(serializers.ModelSerializer):
             'contenu_package_url',
             'contenu_standard',
             'contenu_version',
+            'contenu_corps',
         ]
         content_present = any(field in attrs for field in content_field_names)
 
@@ -305,33 +369,28 @@ class LeconSerializer(serializers.ModelSerializer):
         is_new_content = existing_instance is None or existing_type != content_type
 
         if content_type == CONTENT_TYPE_DOCUMENT and is_new_content:
-            errors = {}
-            if not attrs.get('contenu_titre_fichier'):
-                errors['contenu_titre_fichier'] = _('Le titre du document est requis.')
             if not attrs.get('contenu_fichier'):
-                errors['contenu_fichier'] = _('Le fichier document est requis.')
-            if not attrs.get('contenu_format'):
-                errors['contenu_format'] = _('Le format du document est requis.')
-            if errors:
-                raise serializers.ValidationError(errors)
+                raise serializers.ValidationError(
+                    {'contenu_fichier': _('Le fichier document est requis.')}
+                )
 
         if content_type == CONTENT_TYPE_VIDEO and is_new_content:
-            errors = {}
-            if not attrs.get('contenu_titre_fichier'):
-                errors['contenu_titre_fichier'] = _('Le titre de la vidéo est requis.')
             if not attrs.get('contenu_video_source'):
-                errors['contenu_video_source'] = _('Le fichier vidéo source est requis.')
-            if errors:
-                raise serializers.ValidationError(errors)
+                raise serializers.ValidationError(
+                    {'contenu_video_source': _('Le fichier vidéo source est requis.')}
+                )
 
         if content_type == CONTENT_TYPE_SCORM and is_new_content:
-            errors = {}
-            if not attrs.get('contenu_titre_fichier'):
-                errors['contenu_titre_fichier'] = _('Le titre du package SCORM est requis.')
             if not attrs.get('contenu_package_url'):
-                errors['contenu_package_url'] = _('L’archive SCORM est requise.')
-            if errors:
-                raise serializers.ValidationError(errors)
+                raise serializers.ValidationError(
+                    {'contenu_package_url': _('L’archive SCORM est requise.')}
+                )
+
+        if content_type == CONTENT_TYPE_TEXTE and is_new_content:
+            if not (attrs.get('contenu_corps') or '').strip():
+                raise serializers.ValidationError(
+                    {'contenu_corps': _('Le texte du contenu est requis.')}
+                )
 
         return attrs
 
@@ -350,6 +409,8 @@ class LeconSerializer(serializers.ModelSerializer):
             return contenu.contenuvideo, CONTENT_TYPE_VIDEO
         if hasattr(contenu, 'contenuscorm'):
             return contenu.contenuscorm, CONTENT_TYPE_SCORM
+        if hasattr(contenu, 'contenutexte'):
+            return contenu.contenutexte, CONTENT_TYPE_TEXTE
         return None, None
 
     def _extract_content_payload(self, validated_data):
@@ -363,6 +424,7 @@ class LeconSerializer(serializers.ModelSerializer):
             'contenu_package_url',
             'contenu_standard',
             'contenu_version',
+            'contenu_corps',
         ]:
             if field in validated_data:
                 content_payload[field] = validated_data.pop(field)
@@ -373,6 +435,7 @@ class LeconSerializer(serializers.ModelSerializer):
             CONTENT_TYPE_DOCUMENT: ContenuDocument,
             CONTENT_TYPE_VIDEO: ContenuVideo,
             CONTENT_TYPE_SCORM: ContenuSCORM,
+            CONTENT_TYPE_TEXTE: ContenuTexte,
         }
 
         model = content_model_map[content_type]
@@ -387,7 +450,15 @@ class LeconSerializer(serializers.ModelSerializer):
         if existing_instance is not None and not title:
             title = existing_instance.titre_fichier
 
-        payload = {'lecon': lecon, 'titre_fichier': title or ''}
+        uploaded = (
+            content_payload.get('contenu_fichier')
+            or content_payload.get('contenu_video_source')
+            or content_payload.get('contenu_package_url')
+        )
+        if uploaded and not title:
+            title = _filename_stem(uploaded) or lecon.titre
+
+        payload = {'lecon': lecon, 'titre_fichier': title or lecon.titre or 'Contenu'}
 
         if content_type == CONTENT_TYPE_DOCUMENT:
             fichier = content_payload.get('contenu_fichier')
@@ -395,7 +466,9 @@ class LeconSerializer(serializers.ModelSerializer):
             if existing_instance is not None:
                 fichier = fichier or existing_instance.fichier
                 format_ = format_ or existing_instance.format
-            payload.update({'fichier': fichier, 'format': format_})
+            if fichier and not format_:
+                format_ = _filename_extension(fichier) or 'PDF'
+            payload.update({'fichier': fichier, 'format': format_ or 'PDF'})
         elif content_type == CONTENT_TYPE_VIDEO:
             fichier_source = content_payload.get('contenu_video_source')
             if existing_instance is not None:
@@ -416,6 +489,14 @@ class LeconSerializer(serializers.ModelSerializer):
                     'version': version or '1.2',
                 }
             )
+        elif content_type == CONTENT_TYPE_TEXTE:
+            corps = content_payload.get('contenu_corps')
+            if existing_instance is not None and corps is None:
+                corps = existing_instance.corps
+            payload.update({'corps': corps or ''})
+            if not payload.get('titre_fichier'):
+                payload['titre_fichier'] = lecon.titre or 'Texte'
+
 
         if existing_instance is not None:
             for attr, value in payload.items():
@@ -426,16 +507,32 @@ class LeconSerializer(serializers.ModelSerializer):
         else:
             instance = model.objects.create(**payload)
 
-        if is_update:
-            if content_type == CONTENT_TYPE_VIDEO and content_payload.get('contenu_video_source'):
+        # Toujours finaliser vidéo/SCORM après create ou update fichier
+        if content_type == CONTENT_TYPE_VIDEO and (
+            content_payload.get('contenu_video_source') or not is_update
+        ):
+            if instance.fichier_source:
                 process_video_content(instance)
-            elif content_type == CONTENT_TYPE_SCORM and content_payload.get('contenu_package_url'):
+        elif content_type == CONTENT_TYPE_SCORM and (
+            content_payload.get('contenu_package_url') or not is_update
+        ):
+            if getattr(instance, 'package_url', None):
                 process_scorm_package(instance)
 
         return instance
 
     @transaction.atomic
     def create(self, validated_data):
+        if not validated_data.get('ordre'):
+            module = validated_data.get('module')
+            if module is not None:
+                max_ordre = (
+                    Lecon.objects.filter(module=module)
+                    .order_by('-ordre')
+                    .values_list('ordre', flat=True)
+                    .first()
+                )
+                validated_data['ordre'] = (max_ordre or 0) + 1
         content_type, content_payload = self._extract_content_payload(validated_data)
         lecon = super().create(validated_data)
         if content_type:
@@ -464,10 +561,45 @@ class LeconSerializer(serializers.ModelSerializer):
 class ModuleSerializer(serializers.ModelSerializer):
     parcours = serializers.PrimaryKeyRelatedField(queryset=Parcours.objects.all())
     lecons = LeconSerializer(many=True, read_only=True)
+    quizzes = serializers.SerializerMethodField()
 
     class Meta:
         model = Module
-        fields = ['id', 'parcours', 'titre', 'description', 'ordre', 'lecons']
+        fields = ['id', 'parcours', 'titre', 'description', 'ordre', 'lecons', 'quizzes']
+
+    def get_quizzes(self, obj):
+        quizzes = getattr(obj, 'quizzes', None)
+        if quizzes is None:
+            return []
+        request = self.context.get('request')
+        user = getattr(request, 'user', None) if request else None
+        passed_ids = set()
+        if user and user.is_authenticated:
+            from apps.quizzes.models import TentativeQuiz
+
+            quiz_ids = [quiz.id for quiz in quizzes.all()]
+            if quiz_ids:
+                passed_ids = set(
+                    TentativeQuiz.objects.filter(
+                        apprenant=user,
+                        quiz_id__in=quiz_ids,
+                        est_reussi=True,
+                    ).values_list('quiz_id', flat=True)
+                )
+        return [
+            {
+                'id': str(quiz.id),
+                'titre': quiz.titre,
+                'description': quiz.description,
+                'note_de_passage': float(quiz.note_de_passage),
+                'duree_minutes': quiz.duree_minutes,
+                'max_tentatives': quiz.max_tentatives,
+                'lecon': str(quiz.lecon_id) if quiz.lecon_id else None,
+                'questions_count': quiz.questions.count(),
+                'deja_reussi': quiz.id in passed_ids,
+            }
+            for quiz in quizzes.all()
+        ]
 
     def validate_parcours(self, value):
         request = self.context.get('request')
@@ -476,6 +608,68 @@ class ModuleSerializer(serializers.ModelSerializer):
                 _('Vous ne pouvez pas rattacher ce module à ce parcours.')
             )
         return value
+
+    def create(self, validated_data):
+        if not validated_data.get('ordre'):
+            parcours = validated_data.get('parcours')
+            if parcours is not None:
+                max_ordre = (
+                    Module.objects.filter(parcours=parcours)
+                    .order_by('-ordre')
+                    .values_list('ordre', flat=True)
+                    .first()
+                )
+                validated_data['ordre'] = (max_ordre or 0) + 1
+        return super().create(validated_data)
+
+
+def _user_is_enrolled(user, parcours):
+    if not user or not user.is_authenticated:
+        return False
+    from apps.progression.models import Inscription, Progression
+
+    if Inscription.objects.filter(apprenant=user, parcours=parcours).exists():
+        return True
+    return Progression.objects.filter(
+        apprenant=user,
+        lecon__module__parcours=parcours,
+    ).exists()
+
+
+def _user_has_favorite(user, parcours):
+    if not user or not user.is_authenticated:
+        return False
+    from apps.progression.models import Favori
+
+    return Favori.objects.filter(apprenant=user, parcours=parcours).exists()
+
+
+
+def _formateur_display_name(user):
+    """Nom affichable du créateur (admin ou formateur)."""
+    if not user:
+        return ''
+    full = (user.get_full_name() or '').strip()
+    if full:
+        return full
+    email = (getattr(user, 'email', None) or '').strip()
+    if email:
+        return email
+    username = (getattr(user, 'username', None) or '').strip()
+    return username or 'Utilisateur'
+
+
+def _publie_par_label(user):
+    """Libellé « Publié par l'administrateur/formateur … »."""
+    if not user:
+        return 'Équipe pédagogique'
+    name = _formateur_display_name(user)
+    role = getattr(user, 'role', None)
+    if role == 'ADMIN' or getattr(user, 'is_staff', False):
+        return f"Publié par l'administrateur {name}"
+    if role == 'FORMATEUR':
+        return f'Publié par le formateur {name}'
+    return f'Publié par {name}'
 
 
 class ParcoursWriteSerializer(serializers.ModelSerializer):
@@ -490,11 +684,20 @@ class ParcoursWriteSerializer(serializers.ModelSerializer):
             'profil_cible',
             'statut',
             'formateur',
+            'image',
             'ordre',
             'date_creation',
             'date_modification',
         ]
         read_only_fields = ['id', 'formateur', 'date_creation', 'date_modification']
+
+    def create(self, validated_data):
+        if not validated_data.get('ordre'):
+            max_ordre = (
+                Parcours.objects.order_by('-ordre').values_list('ordre', flat=True).first()
+            )
+            validated_data['ordre'] = (max_ordre or 0) + 1
+        return super().create(validated_data)
 
     def validate(self, attrs):
         target_status = attrs.get(
@@ -521,15 +724,18 @@ class ParcoursWriteSerializer(serializers.ModelSerializer):
 class ParcoursListSerializer(serializers.ModelSerializer):
     """Serializer pour le catalogue / la liste des parcours (vue synthétique)."""
 
-    formateur_nom = serializers.CharField(
-        source='formateur.get_full_name', read_only=True
-    )
+    formateur_nom = serializers.SerializerMethodField()
+    formateur_role = serializers.SerializerMethodField()
+    publie_par = serializers.SerializerMethodField()
     profil_cible_display = serializers.CharField(
         source='get_profil_cible_display', read_only=True
     )
     nombre_modules = serializers.IntegerField(
         source='modules.count', read_only=True
     )
+    nombre_lecons = serializers.SerializerMethodField()
+    is_enrolled = serializers.SerializerMethodField()
+    is_favorite = serializers.SerializerMethodField()
 
     class Meta:
         model = Parcours
@@ -542,19 +748,53 @@ class ParcoursListSerializer(serializers.ModelSerializer):
             'statut',
             'formateur',
             'formateur_nom',
+            'formateur_role',
+            'publie_par',
+            'image',
             'nombre_modules',
+            'nombre_lecons',
+            'is_enrolled',
+            'is_favorite',
             'ordre',
             'date_creation',
         ]
+
+    def get_nombre_lecons(self, obj):
+        return sum(module.lecons.count() for module in obj.modules.all())
+
+    def get_is_enrolled(self, obj):
+        request = self.context.get('request')
+        if not request:
+            return False
+        return _user_is_enrolled(request.user, obj)
+
+    def get_is_favorite(self, obj):
+        request = self.context.get('request')
+        if not request:
+            return False
+        return _user_has_favorite(request.user, obj)
+
+    def get_formateur_nom(self, obj):
+        return _formateur_display_name(obj.formateur)
+
+    def get_formateur_role(self, obj):
+        if not obj.formateur:
+            return None
+        return getattr(obj.formateur, 'role', None)
+
+    def get_publie_par(self, obj):
+        return _publie_par_label(obj.formateur)
 
 
 class ParcoursDetailSerializer(serializers.ModelSerializer):
     """Serializer détaillé renvoyant l'intégralité de l'arbre pédagogique."""
 
-    formateur_nom = serializers.CharField(
-        source='formateur.get_full_name', read_only=True
-    )
+    formateur_nom = serializers.SerializerMethodField()
+    formateur_role = serializers.SerializerMethodField()
+    publie_par = serializers.SerializerMethodField()
     modules = ModuleSerializer(many=True, read_only=True)
+    is_enrolled = serializers.SerializerMethodField()
+    is_favorite = serializers.SerializerMethodField()
 
     class Meta:
         model = Parcours
@@ -566,8 +806,36 @@ class ParcoursDetailSerializer(serializers.ModelSerializer):
             'statut',
             'formateur',
             'formateur_nom',
+            'formateur_role',
+            'publie_par',
+            'image',
             'ordre',
             'modules',
+            'is_enrolled',
+            'is_favorite',
             'date_creation',
             'date_modification',
         ]
+
+    def get_is_enrolled(self, obj):
+        request = self.context.get('request')
+        if not request:
+            return False
+        return _user_is_enrolled(request.user, obj)
+
+    def get_is_favorite(self, obj):
+        request = self.context.get('request')
+        if not request:
+            return False
+        return _user_has_favorite(request.user, obj)
+
+    def get_formateur_nom(self, obj):
+        return _formateur_display_name(obj.formateur)
+
+    def get_formateur_role(self, obj):
+        if not obj.formateur:
+            return None
+        return getattr(obj.formateur, 'role', None)
+
+    def get_publie_par(self, obj):
+        return _publie_par_label(obj.formateur)
