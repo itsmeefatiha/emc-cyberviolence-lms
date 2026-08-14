@@ -15,7 +15,8 @@ class ProgressionSerializer(serializers.ModelSerializer):
             'lecon',
             'statut',
             'temps_passe',
+            'date_dernier_activite',
             'date_debut',
             'date_fin',
         ]
-        read_only_fields = ['id', 'date_debut', 'date_fin']
+        read_only_fields = ['id', 'date_dernier_activite', 'date_debut', 'date_fin']

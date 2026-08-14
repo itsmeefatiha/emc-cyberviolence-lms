@@ -216,3 +216,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Ignorer tous les médias importés par les utilisateurs
+media/
+
+.env.test
+
+# IDE
+.vscode/
