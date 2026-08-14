@@ -225,3 +225,12 @@ class ContenuSCORM(Contenu):
     class Meta:
         verbose_name = _('Contenu SCORM')
         verbose_name_plural = _('Contenus SCORM')
+
+class ContenuTexte(Contenu):
+    """Contenu pédagogique en texte simple."""
+
+    corps = models.TextField(verbose_name=_('Corps du texte'))
+
+    class Meta:
+        verbose_name = _('Contenu Texte')
+        verbose_name_plural = _('Contenus Texte')

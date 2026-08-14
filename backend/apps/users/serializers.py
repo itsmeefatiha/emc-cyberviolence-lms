@@ -1,5 +1,6 @@
 from djoser.serializers import (
     UserCreateSerializer as BaseUserCreateSerializer,
+    UserCreatePasswordRetypeSerializer as BaseUserCreatePasswordRetypeSerializer,
     UserSerializer as BaseUserSerializer,
 )
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -23,6 +24,12 @@ class CustomUserCreateSerializer(BaseUserCreateSerializer):
             'profil_professionnel',
             'is_active',
         )
+
+
+class CustomUserCreatePasswordRetypeSerializer(BaseUserCreatePasswordRetypeSerializer):
+    """Registration with password confirmation (USER_CREATE_PASSWORD_RETYPE)."""
+    class Meta(CustomUserCreateSerializer.Meta):
+        pass
 
 
 class CustomUserSerializer(BaseUserSerializer):

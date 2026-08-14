@@ -26,7 +26,7 @@ def _media_relative_url(*parts: str) -> str:
 
 
 def process_video_content(video_instance: ContenuVideo) -> ContenuVideo:
-    """Simule le traitement asynchrone d'une vidéo et remplit ses métadonnées."""
+    """Prépare une vidéo pour la lecture (pointe vers le fichier source réel)."""
 
     video_instance.statut_encodage = ContenuVideo.StatutEncodage.EN_COURS
     video_instance.save(update_fields=['statut_encodage'])
@@ -39,9 +39,13 @@ def process_video_content(video_instance: ContenuVideo) -> ContenuVideo:
             source_size = 0
 
     video_instance.duree = max(30, source_size // 1024) if source_size else 180
-    video_instance.url_stream = _media_relative_url(
-        VIDEO_STREAM_PREFIX, f'{video_instance.id}.m3u8'
-    )
+
+    # Utiliser l'URL réelle du fichier uploadé (pas un faux flux HLS)
+    if video_instance.fichier_source:
+        video_instance.url_stream = video_instance.fichier_source.url
+    else:
+        video_instance.url_stream = ''
+
     video_instance.statut_encodage = ContenuVideo.StatutEncodage.PRÊT
     video_instance.save(
         update_fields=['duree', 'url_stream', 'statut_encodage']

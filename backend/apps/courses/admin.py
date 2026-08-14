@@ -1,8 +1,8 @@
 from django.contrib import admin
-from .models import Lecon, Module, Parcours
 from .models import (
     ContenuDocument,
     ContenuSCORM,
+    ContenuTexte,
     ContenuVideo,
     Lecon,
     Module,
@@ -32,6 +32,15 @@ class ParcoursAdmin(admin.ModelAdmin):
     list_filter = ('profil_cible', 'statut')
     search_fields = ('titre', 'description')
     inlines = [ModuleInline]
+    fields = (
+        'titre',
+        'description',
+        'profil_cible',
+        'statut',
+        'formateur',
+        'image',
+        'ordre',
+    )
 
 
 @admin.register(Module)
@@ -76,3 +85,9 @@ class ContenuSCORMAdmin(admin.ModelAdmin):
         'date_creation',
     )
     search_fields = ('titre_fichier', 'lecon__titre')
+
+
+@admin.register(ContenuTexte)
+class ContenuTexteAdmin(admin.ModelAdmin):
+    list_display = ('titre_fichier', 'lecon', 'date_creation')
+    search_fields = ('titre_fichier', 'lecon__titre', 'corps')

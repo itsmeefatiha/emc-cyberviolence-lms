@@ -75,6 +75,7 @@ class ReorderActionMixin:
 class ParcoursViewSet(ReorderActionMixin, viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsOwnerFormateurOrAdmin]
     ordering_model = Parcours
+    parser_classes = [JSONParser, FormParser, MultiPartParser]
 
     def get_serializer_class(self):
         if self.action in {'create', 'update', 'partial_update'}:
@@ -91,17 +92,19 @@ class ParcoursViewSet(ReorderActionMixin, viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         user_role = getattr(user, 'role', None)
+        prefetch = (
+            'modules__lecons__contenu',
+            'modules__quizzes__questions',
+        )
 
         if user_role == 'ADMIN' or user.is_staff:
-            return Parcours.objects.all().select_related('formateur').prefetch_related(
-                'modules__lecons__contenu'
-            )
+            return Parcours.objects.all().select_related('formateur').prefetch_related(*prefetch)
 
         if user_role == 'FORMATEUR':
             return (
                 Parcours.objects.filter(formateur=user)
                 | Parcours.objects.filter(statut=StatutPublication.PUBLIE)
-            ).distinct().select_related('formateur').prefetch_related('modules__lecons__contenu')
+            ).distinct().select_related('formateur').prefetch_related(*prefetch)
 
         user_profil = getattr(user, 'profil_professionnel', None)
         queryset = Parcours.objects.filter(statut=StatutPublication.PUBLIE)
@@ -109,10 +112,14 @@ class ParcoursViewSet(ReorderActionMixin, viewsets.ModelViewSet):
         if user_profil:
             queryset = queryset.filter(profil_cible=user_profil)
 
-        return queryset.select_related('formateur').prefetch_related('modules__lecons__contenu')
+        return queryset.select_related('formateur').prefetch_related(*prefetch)
 
     def perform_create(self, serializer):
+        # formateur = utilisateur connecté ; notifications via signal post_save
         serializer.save(formateur=self.request.user)
+
+    def perform_update(self, serializer):
+        serializer.save()
 
     @action(detail=False, methods=['post'], url_path='reorder')
     def reorder(self, request):
