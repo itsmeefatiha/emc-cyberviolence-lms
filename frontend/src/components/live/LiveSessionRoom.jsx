@@ -376,6 +376,8 @@ export default function LiveSessionRoom() {
       aliveRef.current = false
       if (pollTimer) clearInterval(pollTimer)
       cleanupMedia()
+      // Leave with the peer id assigned during boot, not the value from effect start.
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- peerId is set asynchronously
       webrtcLeave(sessionId, peerIdRef.current).catch(() => {})
     }
   }, [
@@ -404,7 +406,7 @@ export default function LiveSessionRoom() {
     setCamOn(track.enabled)
   }
 
-  const localName = sessionMeta?.display_name || displayNameRef.current
+  const localName = sessionMeta?.display_name || 'Vous'
 
   return (
     <div className="flex h-screen flex-col bg-slate-950 text-white">

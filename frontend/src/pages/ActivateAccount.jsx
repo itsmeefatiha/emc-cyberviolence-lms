@@ -29,7 +29,7 @@ export default function ActivateAccount() {
             successMessage: 'Compte activé avec succès ! Vous pouvez maintenant vous connecter.',
           },
         })
-      } catch (err) {
+      } catch {
         setError('Le lien d’activation est invalide ou a expiré.')
       }
     }

@@ -6,7 +6,6 @@ import {
   ChevronDown,
   ChevronRight,
   Circle,
-  ExternalLink,
   FileText,
   HelpCircle,
   Loader2,
@@ -280,7 +279,7 @@ export default function CourseLearningView() {
     trackLecon({ lecon_id: activeItem.id, statut: 'EN_COURS', temps_passe_ajoute: 0 }).catch(
       () => {}
     )
-  }, [activeItem?.id, activeItem?.kind, currentLessonStatut])
+  }, [activeItem, activeItem?.id, activeItem?.kind, currentLessonStatut])
 
   if (loading) {
     return (

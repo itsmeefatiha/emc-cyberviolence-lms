@@ -136,7 +136,7 @@ export default function CourseList({
           )
         }
         setCourses(normalized)
-      } catch (requestError) {
+      } catch {
         setError('Impossible de charger les parcours depuis le backend Django.')
       } finally {
         setLoading(false)
