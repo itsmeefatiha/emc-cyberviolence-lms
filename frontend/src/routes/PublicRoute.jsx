@@ -1,10 +1,13 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
+import { getHomePath } from '../utils/navigation.js'
 
 export default function PublicRoute() {
-  const { isAuthenticated, loading } = useAuth()
-  const hasStoredSession = Boolean(localStorage.getItem('accessToken') && localStorage.getItem('refreshToken'))
+  const { isAuthenticated, loading, user } = useAuth()
+  const hasStoredSession = Boolean(
+    localStorage.getItem('accessToken') && localStorage.getItem('refreshToken')
+  )
 
   if (loading && hasStoredSession) {
     return (
@@ -16,5 +19,9 @@ export default function PublicRoute() {
     )
   }
 
-  return isAuthenticated ? <Navigate to="/dashboard" replace /> : <Outlet />
+  return isAuthenticated ? (
+    <Navigate to={getHomePath(user?.role)} replace />
+  ) : (
+    <Outlet />
+  )
 }
