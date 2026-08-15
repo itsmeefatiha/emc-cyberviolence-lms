@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronLeft, Lock, Mail } from 'lucide-react'
+import { ChevronLeft, Mail } from 'lucide-react'
 import { requestPasswordReset } from '../api/auth.js'
 import AuthBanner from '../components/auth/AuthBanner.jsx'
 import AuthButton from '../components/auth/AuthButton.jsx'
@@ -20,7 +20,7 @@ export default function ForgotPassword() {
     setError(null)
 
     if (!email.trim()) {
-      setError('Email is required.')
+      setError('L’adresse e-mail est requise.')
       return
     }
 
@@ -30,7 +30,10 @@ export default function ForgotPassword() {
       await requestPasswordReset(email.trim())
       setSuccess(true)
     } catch (requestError) {
-      setError(requestError?.response?.data?.detail || 'Unable to send reset instructions.')
+      setError(
+        requestError?.response?.data?.detail ||
+          'Impossible d’envoyer les instructions de réinitialisation.',
+      )
     } finally {
       setLoading(false)
     }
@@ -41,14 +44,14 @@ return (
       illustration={
         <img
           src={AuthIllustration}
-          alt="Password reset illustration"
+          alt="Réinitialisation du mot de passe"
           className="w-full max-w-md h-auto object-contain drop-shadow-xl"
         />
       }
       footer={
         <Link to="/login" className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:text-brand-hover transition">
           <ChevronLeft className="h-4 w-4" />
-          Back to Sign in
+          Retour à la connexion
         </Link>
       }
     >
@@ -60,17 +63,21 @@ return (
           </span>
         </div>
         <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-          Forgot password?
+          Mot de passe oublié ?
         </h1>
         <p className="mt-3 text-sm font-medium text-slate-500">
-          Enter your details to receive a reset link.
+          Saisissez votre adresse e-mail pour recevoir un lien de réinitialisation.
         </p>
 
         <div className="mt-6">
           <AuthBanner
             type={success ? 'success' : error ? 'error' : null}
-            title={success ? 'Check your email' : undefined}
-            message={success ? 'If the account exists, reset instructions have been sent.' : error}
+            title={success ? 'Vérifiez votre boîte e-mail' : undefined}
+            message={
+              success
+                ? 'Si le compte existe, les instructions de réinitialisation ont été envoyées.'
+                : error
+            }
           />
         </div>
 
@@ -84,14 +91,14 @@ return (
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   autoComplete="email"
-                  placeholder="Enter email address"
+                  placeholder="Adresse e-mail"
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-12 pr-4 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-brand focus:ring-1 focus:ring-brand"
                 />
               </div>
             </AuthField>
 
             <AuthButton type="submit" disabled={loading} className="w-full">
-              {loading ? 'Sending...' : 'Submit'}
+              {loading ? 'Envoi...' : 'Envoyer'}
             </AuthButton>
           </form>
         ) : null}
