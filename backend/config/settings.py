@@ -160,7 +160,10 @@ if IS_TESTING:
     # En mode test : intercepte les emails en mémoire sans utiliser SMTP
     EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 else:
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_BACKEND = os.getenv(
+        'EMAIL_BACKEND',
+        'django.core.mail.backends.smtp.EmailBackend',
+    )
     EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
     EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
     EMAIL_USE_TLS = True

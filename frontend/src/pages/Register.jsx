@@ -32,16 +32,16 @@ export default function Register() {
   const validate = () => {
     const nextErrors = {}
 
-    if (!form.first_name.trim()) nextErrors.first_name = 'First name is required.'
-    if (!form.last_name.trim()) nextErrors.last_name = 'Last name is required.'
-    if (!form.email.trim()) nextErrors.email = 'Email is required.'
-    if (!form.password.trim()) nextErrors.password = 'Password is required.'
+    if (!form.first_name.trim()) nextErrors.first_name = 'Le prénom est requis.'
+    if (!form.last_name.trim()) nextErrors.last_name = 'Le nom est requis.'
+    if (!form.email.trim()) nextErrors.email = 'L’adresse e-mail est requise.'
+    if (!form.password.trim()) nextErrors.password = 'Le mot de passe est requis.'
     if (form.password.trim() && form.password.length < 8) {
-      nextErrors.password = 'Password must be at least 8 characters.'
+      nextErrors.password = 'Le mot de passe doit contenir au moins 8 caractères.'
     }
-    if (!form.confirm_password.trim()) nextErrors.confirm_password = 'Please confirm your password.'
+    if (!form.confirm_password.trim()) nextErrors.confirm_password = 'Veuillez confirmer votre mot de passe.'
     if (form.password && form.confirm_password && form.password !== form.confirm_password) {
-      nextErrors.confirm_password = 'Passwords do not match.'
+      nextErrors.confirm_password = 'Les mots de passe ne correspondent pas.'
     }
 
     setFieldErrors(nextErrors)
@@ -66,7 +66,7 @@ export default function Register() {
         replace: true,
         state: {
           successMessage:
-            'Account created successfully! Please check your email inbox to activate your account before signing in.',
+            'Compte créé avec succès ! Consultez votre boîte e-mail pour activer votre compte avant de vous connecter.',
         },
       })
     } catch {
@@ -83,15 +83,15 @@ export default function Register() {
       illustration={
         <img
           src={AuthIllustration}
-          alt="Register illustration"
+          alt="Inscription"
           className="w-full max-w-md h-auto object-contain drop-shadow-xl"
         />
       }
       footer={
         <div className="text-sm text-slate-600">
-          Already have an account?{' '}
+          Vous avez déjà un compte ?{' '}
           <Link to="/login" className="font-semibold text-brand hover:text-brand-hover hover:underline">
-            Sign In
+            Se connecter
           </Link>
         </div>
       }
@@ -105,17 +105,17 @@ export default function Register() {
         </div>
 
         <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
-          Hello,<br />
-          Join Us
+          Bonjour,<br />
+          Rejoignez-nous
         </h1>
         <p className="mt-3 text-sm font-medium text-slate-500">
-          Create your profile to access the secure workspace.
+          Créez votre profil pour accéder à l’espace de formation sécurisé.
         </p>
 
         <div className="mt-6">
           <AuthBanner
             type={successMessage ? 'success' : error ? 'error' : null}
-            title={successMessage ? 'Account Created!' : undefined}
+            title={successMessage ? 'Compte créé !' : undefined}
             message={successMessage || error}
           />
         </div>
@@ -128,7 +128,7 @@ export default function Register() {
                 type="text"
                 name="first_name"
                 autoComplete="given-name"
-                placeholder="First name"
+                placeholder="Prénom"
                 value={form.first_name}
                 onChange={handleChange}
               />
@@ -139,7 +139,7 @@ export default function Register() {
                 type="text"
                 name="last_name"
                 autoComplete="family-name"
-                placeholder="Last name"
+                placeholder="Nom"
                 value={form.last_name}
                 onChange={handleChange}
               />
@@ -166,7 +166,7 @@ export default function Register() {
                   type={showPassword ? 'text' : 'password'}
                   name="password"
                   autoComplete="new-password"
-                  placeholder="Password"
+                  placeholder="Mot de passe"
                   value={form.password}
                   onChange={handleChange}
                 />
@@ -174,7 +174,7 @@ export default function Register() {
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
@@ -188,7 +188,7 @@ export default function Register() {
                   type={showConfirmPassword ? 'text' : 'password'}
                   name="confirm_password"
                   autoComplete="new-password"
-                  placeholder="Confirm Password"
+                  placeholder="Confirmer le mot de passe"
                   value={form.confirm_password}
                   onChange={handleChange}
                 />
@@ -196,7 +196,7 @@ export default function Register() {
                   type="button"
                   onClick={() => setShowConfirmPassword((prev) => !prev)}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
-                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showConfirmPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                 >
                   {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
@@ -206,7 +206,7 @@ export default function Register() {
 
           <div className="pt-4">
             <AuthButton type="submit" disabled={isBusy} className="w-full sm:w-auto">
-              {isBusy ? 'Creating account...' : 'Sign Up'}
+              {isBusy ? 'Création du compte...' : "S'inscrire"}
             </AuthButton>
           </div>
         </form>
