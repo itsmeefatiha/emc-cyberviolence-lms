@@ -44,6 +44,7 @@ export default function QuizPanel({ quizId, onPassed }) {
   const [startedAt, setStartedAt] = useState(null)
   const [remaining, setRemaining] = useState(0)
   const autoSubmitRef = useRef(false)
+  const handleSubmitRef = useRef(null)
 
   useEffect(() => {
     let cancelled = false
@@ -84,7 +85,6 @@ export default function QuizPanel({ quizId, onPassed }) {
   useEffect(() => {
     if (phase !== 'taking' || !startedAt) return undefined
 
-    setRemaining(durationSeconds)
     const tick = setInterval(() => {
       const elapsed = Math.floor((Date.now() - startedAt) / 1000)
       const left = durationSeconds - elapsed
@@ -92,12 +92,11 @@ export default function QuizPanel({ quizId, onPassed }) {
       if (left <= 0 && !autoSubmitRef.current) {
         autoSubmitRef.current = true
         clearInterval(tick)
-        handleSubmit(true)
+        handleSubmitRef.current?.(true)
       }
     }, 1000)
 
     return () => clearInterval(tick)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, startedAt, durationSeconds])
 
   const startQuiz = () => {
@@ -179,6 +178,10 @@ export default function QuizPanel({ quizId, onPassed }) {
     }
   }
 
+  useEffect(() => {
+    handleSubmitRef.current = handleSubmit
+  })
+
   const handleDownloadCert = async () => {
     const certId = result?.certificat?.id
     if (!certId) return
@@ -250,7 +253,6 @@ export default function QuizPanel({ quizId, onPassed }) {
     )
   }
 
-  const passed = result?.tentative?.est_reussi || result?.score_detail?.est_reussi
   const score = result?.tentative?.score_obtenu ?? result?.score_detail?.score_obtenu
   const urgent = remaining <= 60
 

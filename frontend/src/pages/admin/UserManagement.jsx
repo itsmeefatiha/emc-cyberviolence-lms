@@ -1,10 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Search,
   Download,
   Plus,
   ArrowUpDown,
-  Eye,
   Pencil,
   Trash2,
   ChevronLeft,
@@ -137,20 +136,6 @@ export default function UserManagement() {
 
   const hasAnyUsers = users.length > 0
 
-  const handleSelectAll = (event) => {
-    if (event.target.checked) {
-      setSelectedUsers(filteredUsers.map((user) => user.id))
-    } else {
-      setSelectedUsers([])
-    }
-  }
-
-  const handleSelectUser = (id) => {
-    setSelectedUsers((prev) =>
-      prev.includes(id) ? prev.filter((userId) => userId !== id) : [...prev, id],
-    )
-  }
-
   const openCreateModal = () => {
     setEditingUserId(null)
     setUserForm(EMPTY_FORM)
@@ -211,19 +196,6 @@ export default function UserManagement() {
     link.click()
     link.remove()
     URL.revokeObjectURL(url)
-  }
-
-  const handleViewUser = (user) => {
-    window.alert(
-      [
-        `Nom : ${user.fullName}`,
-        `Identifiant : ${user.username}`,
-        `Email : ${user.email}`,
-        `Téléphone : ${user.phone || '—'}`,
-        `Rôle : ${user.role}`,
-        `Statut : ${user.status === 'Active' ? 'Actif' : 'Inactif'}`,
-      ].join('\n'),
-    )
   }
 
   const handleDeleteUser = async (user) => {

@@ -165,7 +165,7 @@ export const handlers = [
     if (denied) return denied
     const contentType = request.headers.get('content-type') || ''
     let titre = 'Nouveau parcours'
-    let description = ''
+    let description
     let profil_cible = 'EDUCATEUR'
     let statut = 'BROUILLON'
 

@@ -1,5 +1,5 @@
 // src/pages/learner/Courses.jsx
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Search,
@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   FileText,
   ChevronRight,
-  GraduationCap,
   RotateCcw,
   Heart,
   Loader2,

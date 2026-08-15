@@ -17,6 +17,12 @@ export default defineConfig([
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
+    rules: {
+      // Fetch-on-mount and Date.now() for live status are valid here;
+      // the React Compiler rules flag them as cascading setState / impurity.
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/purity': 'off',
+    },
   },
   {
     files: ['**/*.{test,spec}.{js,jsx}'],

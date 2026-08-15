@@ -1,5 +1,3 @@
-import React from 'react'
-
 export default function AuthLayout({ children, footer, illustration }) {
   return (
     <main className="min-h-screen w-full bg-slate-50 text-slate-800">

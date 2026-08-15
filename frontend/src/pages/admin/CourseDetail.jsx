@@ -291,6 +291,8 @@ export default function CourseDetail({ course, onBack, readOnly = false }) {
     }
 
     loadCourse()
+    // Reload when the parcours identity changes, not on every course field update.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [course?.id])
 
   const sortedModules = useMemo(() => sortByOrdre(modules), [modules])

@@ -16,12 +16,9 @@ import { Bar, Doughnut, Line } from 'react-chartjs-2'
 import {
   AlertCircle,
   BookOpen,
-  CheckCircle2,
-  Clock,
   GraduationCap,
   Loader2,
   Users,
-  Award,
   TrendingUp,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext.jsx'
@@ -52,14 +49,6 @@ const PROFIL_LABELS = {
 
 const BRAND = '#243491'
 const COLORS = [BRAND, '#0EA5E9', '#10B981', '#F59E0B', '#EC4899', '#6366F1', '#94A3B8']
-
-const formatTime = (seconds) => {
-  if (!seconds || seconds <= 0) return '0 min'
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  if (hours > 0) return `${hours}h ${minutes}m`
-  return `${minutes} min`
-}
 
 function StatCard({ icon: Icon, label, value, tone }) {
   const tones = {
