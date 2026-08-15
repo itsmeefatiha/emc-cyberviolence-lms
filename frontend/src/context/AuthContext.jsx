@@ -139,6 +139,17 @@ export function AuthProvider({ children }) {
     setError(null)
   }, [clearSession])
 
+  const refreshUser = useCallback(async () => {
+    try {
+      const profile = await getCurrentUser()
+      persistSession({ user: profile })
+      return profile
+    } catch (refreshError) {
+      setError(getFriendlyAuthError(refreshError, 'Impossible de rafraîchir le profil.'))
+      throw refreshError
+    }
+  }, [persistSession])
+
   const value = {
     user,
     accessToken,
@@ -150,6 +161,7 @@ export function AuthProvider({ children }) {
     login,
     register,
     logout,
+    refreshUser,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
