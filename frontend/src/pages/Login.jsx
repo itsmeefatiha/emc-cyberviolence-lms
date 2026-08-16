@@ -127,10 +127,10 @@ return (
     >
       <div>
         <div className="mb-8 flex items-center gap-2">
-          <img src={IconCap} alt="EMC E-Formation" className="h-5 w-5 text-slate-500" />
-<span className="text-sm font-bold uppercase tracking-[0.18em] text-[#243491]">
-  EMC E-Formation
-</span>
+          <img src={IconCap} alt="EMC E-Formation" className="h-5 w-5" />
+          <span className="text-sm font-bold uppercase tracking-[0.18em] text-brand">
+            EMC E-Formation
+          </span>
         </div>
 
         <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">

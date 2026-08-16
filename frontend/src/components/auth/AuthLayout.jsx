@@ -4,7 +4,7 @@ export default function AuthLayout({ children, footer, illustration }) {
       <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
         
         {/* ---------------- LEFT SIDE: Illustration Only ---------------- */}
-        <section className="hidden bg-brand lg:flex lg:items-center lg:justify-center p-8 xl:p-16">
+        <section className="hidden bg-brand-light lg:flex lg:items-center lg:justify-center p-8 xl:p-16">
           <div className="w-full max-w-lg flex items-center justify-center">
             {illustration ? (
               illustration
