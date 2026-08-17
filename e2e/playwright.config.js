@@ -32,8 +32,7 @@ export default defineConfig({
   // One worker: catalog course is shared; users are unique per test.
   workers: 1,
 
-  // HTML report: npx playwright show-report
-  reporter: 'html',
+  reporter: process.env.CI ? [['html'], ['github']] : 'html',
 
   /* Shared options for every test. See https://playwright.dev/docs/api/class-testoptions */
   use: {
@@ -71,9 +70,8 @@ export default defineConfig({
       // Give Django time to boot (migrations, DB, etc.).
       timeout: 120 * 1000,
       env: {
-        // Python package path: backend/config/settings.py
+        ...process.env,
         DJANGO_SETTINGS_MODULE: 'config.settings',
-        // Avoid SMTP during registration / Djoser mails if a spec hits those endpoints.
         EMAIL_BACKEND: 'django.core.mail.backends.console.EmailBackend',
       },
     },
