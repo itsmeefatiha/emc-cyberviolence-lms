@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, GraduationCap } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import AuthBanner from '../components/auth/AuthBanner.jsx'
 import AuthButton from '../components/auth/AuthButton.jsx'
 import AuthField from '../components/auth/AuthField.jsx'
 import AuthLayout from '../components/auth/AuthLayout.jsx'
 import AuthIllustration from '../assets/illustration.svg'
+import IconCap from '../assets/graduation-cap2.png'
 
 const initialFormState = {
   first_name: '',
@@ -98,8 +99,8 @@ export default function Register() {
     >
       <div>
         <div className="mb-8 flex items-center gap-2">
-          <GraduationCap className="h-5 w-5 text-slate-500 stroke-[1.5]" />
-          <span className="text-sm font-bold uppercase tracking-[0.18em] text-slate-500">
+          <img src={IconCap} alt="EMC E-Formation" className="h-5 w-5" />
+          <span className="text-sm font-bold uppercase tracking-[0.18em] text-brand">
             EMC E-Formation
           </span>
         </div>

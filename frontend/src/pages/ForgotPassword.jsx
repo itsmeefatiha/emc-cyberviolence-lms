@@ -7,7 +7,7 @@ import AuthButton from '../components/auth/AuthButton.jsx'
 import AuthField from '../components/auth/AuthField.jsx'
 import AuthLayout from '../components/auth/AuthLayout.jsx'
 import AuthIllustration from '../assets/illustration.svg'
-import { GraduationCap } from 'lucide-react'
+import IconCap from '../assets/graduation-cap2.png'
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')
@@ -57,8 +57,8 @@ return (
     >
       <div>
         <div className="mb-8 flex items-center gap-2">
-          <GraduationCap className="h-5 w-5 text-slate-500 stroke-[1.5]" />
-          <span className="text-sm font-bold uppercase tracking-[0.18em] text-slate-500">
+          <img src={IconCap} alt="EMC E-Formation" className="h-5 w-5" />
+          <span className="text-sm font-bold uppercase tracking-[0.18em] text-brand">
             EMC E-Formation
           </span>
         </div>

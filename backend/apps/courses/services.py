@@ -4,7 +4,8 @@ import shutil
 import zipfile
 from pathlib import Path
 from urllib.parse import urljoin
-from xml.etree import ElementTree as ET
+from defusedxml import ElementTree as ET
+from xml.etree.ElementTree import ParseError
 
 from django.conf import settings
 from django.db import transaction
@@ -75,7 +76,7 @@ def _candidate_scorm_launch_path(extracted_dir: Path) -> Path | None:
                     if launch_candidate.exists():
                         return launch_candidate
 
-        except ET.ParseError:
+        except ParseError:
             pass
 
     preferred_names = ('index.html', 'launch.html', 'default.html', 'default.htm')

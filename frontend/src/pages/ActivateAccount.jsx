@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { AlertTriangle, Loader2 } from 'lucide-react'
-// Assurez-vous d'importer la fonction depuis le bon fichier (là où vous l'avez collée)
-import { activateAccount } from '../api/auth.js' 
+import { activateAccount } from '../api/auth.js'
+import AuthButton from '../components/auth/AuthButton.jsx'
+import AuthLayout from '../components/auth/AuthLayout.jsx'
+import AuthIllustration from '../assets/illustration.svg'
+import IconCap from '../assets/graduation-cap2.png'
 
 export default function ActivateAccount() {
   const { uid, token } = useParams()
   const navigate = useNavigate()
   const [error, setError] = useState(null)
-  
-  // useRef permet d'éviter que useEffect ne s'exécute 2 fois en mode strict React
   const hasAttempted = useRef(false)
 
   useEffect(() => {
@@ -18,11 +19,7 @@ export default function ActivateAccount() {
 
     const verifyAccount = async () => {
       try {
-        // 1. On appelle l'API backend Djoser pour activer
         await activateAccount({ uid, token })
-        
-        // 2. Si succès, on redirige vers le Login en passant le message dans le "state"
-        // (Votre page Login va automatiquement l'afficher grâce à location.state.successMessage)
         navigate('/login', {
           replace: true,
           state: {
@@ -38,30 +35,49 @@ export default function ActivateAccount() {
   }, [uid, token, navigate])
 
   return (
-    <main className="min-h-screen w-full bg-slate-100 flex items-center justify-center font-sans text-slate-800 p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+    <AuthLayout
+      illustration={
+        <img
+          src={AuthIllustration}
+          alt="Activation du compte"
+          className="w-full max-w-md h-auto object-contain drop-shadow-xl"
+        />
+      }
+    >
+      <div>
+        <div className="mb-8 flex items-center gap-2">
+          <img src={IconCap} alt="EMC E-Formation" className="h-5 w-5" />
+          <span className="text-sm font-bold uppercase tracking-[0.18em] text-brand">
+            EMC E-Formation
+          </span>
+        </div>
         {!error ? (
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
-            <h2 className="text-xl font-bold text-slate-900">Activation en cours...</h2>
-            <p className="text-sm text-slate-500">Veuillez patienter pendant que nous sécurisons votre compte.</p>
+          <div className="flex flex-col items-start gap-4">
+            <Loader2 className="h-10 w-10 animate-spin text-brand" />
+            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+              Activation en cours...
+            </h1>
+            <p className="text-sm font-medium text-slate-500">
+              Veuillez patienter pendant que nous sécurisons votre compte.
+            </p>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-4">
-            <div className="h-14 w-14 rounded-full bg-rose-100 flex items-center justify-center mb-2">
+          <div className="flex flex-col items-start gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-rose-100">
               <AlertTriangle className="h-7 w-7 text-rose-600" />
             </div>
-            <h2 className="text-xl font-bold text-slate-900">Échec de l'activation</h2>
-            <p className="text-sm text-slate-500">{error}</p>
-            <button
-              onClick={() => navigate('/login')}
-              className="mt-4 rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
-            >
-              Retour à la connexion
-            </button>
+            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+              Échec de l&apos;activation
+            </h1>
+            <p className="text-sm font-medium text-slate-500">{error}</p>
+            <div className="pt-2">
+              <AuthButton type="button" onClick={() => navigate('/login')} className="w-full sm:w-auto">
+                Retour à la connexion
+              </AuthButton>
+            </div>
           </div>
         )}
       </div>
-    </main>
+    </AuthLayout>
   )
 }

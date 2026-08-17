@@ -1,0 +1,12 @@
+{
+  "name": "emc-nft",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Tests non-fonctionnels : accessibilité Lighthouse",
+  "scripts": {
+    "lighthouse": "lhci autorun --config=./lighthouserc.cjs"
+  },
+  "devDependencies": {
+    "@lhci/cli": "^0.14.0"
+  }
+}
