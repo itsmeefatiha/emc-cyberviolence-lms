@@ -1,0 +1,5 @@
+node_modules/
+lhci-report/
+.lighthouseci/
+reports/
+bandit-report.txt

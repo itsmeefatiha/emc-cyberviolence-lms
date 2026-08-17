@@ -1,0 +1,9 @@
+# Scan SAST du code Django applicatif (pas les tests ni les migrations).
+exclude_dirs:
+  - tests
+  - migrations
+  - venv
+  - .venv
+
+skips:
+  - B101 # assert dans le code métier (ex. contrôles de salle live)
