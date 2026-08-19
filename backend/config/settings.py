@@ -59,9 +59,6 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-0z7si)oqcs@%-7+ii3-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['*']  # Adjust in production
-
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -187,9 +184,9 @@ if IS_TESTING:
 DJOSER = {
     'LOGIN_FIELD': 'email',
     'USER_CREATE_PASSWORD_RETYPE': True,
-    'EMAIL_FRONTEND_DOMAIN': 'localhost:5173',
+    'EMAIL_FRONTEND_DOMAIN': os.getenv('EMAIL_FRONTEND_DOMAIN', 'localhost:5173'),
     'EMAIL_FRONTEND_SITE_NAME': 'EMC E-Formation',
-    'EMAIL_FRONTEND_PROTOCOL': 'http',
+    'EMAIL_FRONTEND_PROTOCOL': os.getenv('EMAIL_FRONTEND_PROTOCOL', 'http'),
     'SEND_ACTIVATION_EMAIL': True,
     'ACTIVATION_URL': 'activate/{uid}/{token}',
     'PASSWORD_RESET_CONFIRM_URL': 'password/reset/confirm/{uid}/{token}',
@@ -237,21 +234,36 @@ SIMPLE_JWT = {
 # -----------------------------------------------------------------------------
 # CORS & STATIC CONFIGURATION
 # -----------------------------------------------------------------------------
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:3000",
-]
+def _csv_env(name, default):
+    raw = os.getenv(name, '')
+    if not str(raw).strip():
+        return default
+    return [item.strip() for item in str(raw).split(',') if item.strip()]
 
+
+ALLOWED_HOSTS = _csv_env('ALLOWED_HOSTS', ['*'])
+
+CORS_ALLOWED_ORIGINS = _csv_env(
+    'CORS_ALLOWED_ORIGINS',
+    [
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'http://localhost:3000',
+        'http://localhost:8080',
+        'http://127.0.0.1:8080',
+    ],
+)
+CSRF_TRUSTED_ORIGINS = _csv_env('CSRF_TRUSTED_ORIGINS', CORS_ALLOWED_ORIGINS)
 CORS_ALLOW_CREDENTIALS = True
 X_FRAME_OPTIONS = 'SAMEORIGIN'
+USE_X_FORWARDED_HOST = os.getenv('USE_X_FORWARDED_HOST', 'False') == 'True'
 
 LANGUAGE_CODE = 'fr-fr'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 MEDIA_URL = '/media/'
