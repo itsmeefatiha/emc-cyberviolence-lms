@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, Mail } from 'lucide-react'
 import { requestPasswordReset } from '../api/auth.js'
@@ -8,12 +8,16 @@ import AuthField from '../components/auth/AuthField.jsx'
 import AuthLayout from '../components/auth/AuthLayout.jsx'
 import AuthIllustration from '../assets/illustration.svg'
 import IconCap from '../assets/graduation-cap2.png'
+import { getApiErrorMessage } from '../utils/apiError.js'
+import useAutoDismiss from '../hooks/useAutoDismiss.js'
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
+  const clearError = useCallback(() => setError(null), [])
+  useAutoDismiss(error, clearError)
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -31,8 +35,10 @@ export default function ForgotPassword() {
       setSuccess(true)
     } catch (requestError) {
       setError(
-        requestError?.response?.data?.detail ||
+        getApiErrorMessage(
+          requestError,
           'Impossible d’envoyer les instructions de réinitialisation.',
+        ),
       )
     } finally {
       setLoading(false)

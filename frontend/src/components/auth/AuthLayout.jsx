@@ -20,7 +20,7 @@ export default function AuthLayout({ children, footer, illustration }) {
         </section>
 
         {/* ---------------- RIGHT SIDE: Form Container ---------------- */}
-        <section className="flex items-center justify-center bg-white px-6 py-10 sm:px-12 lg:px-16">
+        <section className="flex items-start justify-center overflow-y-auto bg-white px-6 py-10 sm:px-12 lg:items-center lg:px-16">
           <div className="w-full max-w-md">
             {children}
             {footer && (

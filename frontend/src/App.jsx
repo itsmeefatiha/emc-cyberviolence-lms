@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { AlertProvider } from './context/AlertContext.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import ProtectedRoute from './routes/ProtectedRoute.jsx'
 import PublicRoute from './routes/PublicRoute.jsx'
@@ -80,9 +81,11 @@ export function AppRoutes() {
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <AlertProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </AlertProvider>
     </BrowserRouter>
   )
 }

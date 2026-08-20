@@ -2,10 +2,14 @@ import client from './client.js'
 
 // 1. Connexion (JWT)
 export const loginUser = async (credentials) => {
-  const response = await client.post('/auth/jwt/create/', {
-    email: credentials.email,
-    password: credentials.password,
-  })
+  const response = await client.post(
+    '/auth/jwt/create/',
+    {
+      email: credentials.email,
+      password: credentials.password,
+    },
+    { skipAuthRefresh: true },
+  )
   return response.data
 }
 

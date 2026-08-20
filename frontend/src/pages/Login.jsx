@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import AuthBanner from '../components/auth/AuthBanner.jsx'
@@ -9,6 +9,8 @@ import AuthIllustration from '../assets/illustration.svg'
 import { Eye, EyeOff } from 'lucide-react'
 import IconCap from '../assets/graduation-cap2.png'
 import { getHomePath } from '../utils/navigation.js'
+import { getApiErrorMessage } from '../utils/apiError.js'
+import useAutoDismiss from '../hooks/useAutoDismiss.js'
 
 const initialFormState = {
   email: '',
@@ -26,7 +28,24 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
+  const dismissErrors = useCallback(() => {
+    setSubmitError(null)
+    setError(null)
+  }, [setError])
+  useAutoDismiss(submitError ?? error, dismissErrors)
   const banner = useMemo(() => {
+    const bannerError = submitError ?? error
+
+    if (bannerError) {
+      return {
+        type: 'error',
+        message: getApiErrorMessage(
+          { response: { data: { detail: bannerError } } },
+          bannerError,
+        ),
+      }
+    }
+
     if (successMessage) {
       return {
         type: 'success',
@@ -34,19 +53,7 @@ export default function Login() {
       }
     }
 
-    const bannerError = submitError ?? error
-
-    if (!bannerError) {
-      return null
-    }
-
-    return {
-      type: 'error',
-      message:
-        bannerError === 'No active account found with the given credentials'
-          ? 'Identifiants invalides. Vérifiez votre e-mail et votre mot de passe.'
-          : bannerError,
-    }
+    return null
   }, [error, submitError, successMessage])
 
   useEffect(() => {
@@ -79,6 +86,9 @@ export default function Login() {
     if (error) {
       setError(null)
     }
+    if (submitError) {
+      setSubmitError(null)
+    }
   }
 
   const handleSubmit = async (event) => {
@@ -94,11 +104,12 @@ export default function Login() {
     try {
       const session = await login({ email: form.email.trim(), password: form.password })
       navigate(getHomePath(session?.user?.role), { replace: true })
-    } catch (submitError) {
+    } catch (caughtError) {
       setSubmitError(
-        submitError?.response?.data?.detail ||
-          submitError?.response?.data?.non_field_errors?.[0] ||
+        getApiErrorMessage(
+          caughtError,
           'Connexion impossible. Vérifiez votre réseau et réessayez.',
+        ),
       )
     } finally {
       setSubmitting(false)
@@ -142,11 +153,7 @@ return (
         </p>
 
         <div className="mt-6">
-          <AuthBanner
-            type={banner?.type}
-            message={banner?.message}
-            className="mt-0"
-          />
+          <AuthBanner type={banner?.type} message={banner?.message} />
         </div>
 
         <form className="mt-8 space-y-4" onSubmit={handleSubmit} noValidate>

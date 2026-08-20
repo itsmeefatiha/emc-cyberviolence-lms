@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -8,6 +8,7 @@ import AuthField from '../components/auth/AuthField.jsx'
 import AuthLayout from '../components/auth/AuthLayout.jsx'
 import AuthIllustration from '../assets/illustration.svg'
 import IconCap from '../assets/graduation-cap2.png'
+import useAutoDismiss from '../hooks/useAutoDismiss.js'
 
 const initialFormState = {
   first_name: '',
@@ -29,6 +30,8 @@ export default function Register() {
   // États pour afficher/masquer chaque mot de passe
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const clearError = useCallback(() => setError(null), [setError])
+  useAutoDismiss(error, clearError)
 
   const validate = () => {
     const nextErrors = {}

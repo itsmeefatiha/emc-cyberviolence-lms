@@ -17,6 +17,7 @@ import {
   UserCheck,
 } from 'lucide-react'
 import { createUser, deleteUser, listUsers, updateUser } from '../../api/users.js'
+import useAutoDismiss from '../../hooks/useAutoDismiss.js'
 
 const EMPTY_FORM = {
   fullName: '',
@@ -89,6 +90,8 @@ export default function UserManagement() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [userForm, setUserForm] = useState(EMPTY_FORM)
+  const clearErrorMessage = useCallback(() => setErrorMessage(''), [])
+  useAutoDismiss(errorMessage, clearErrorMessage)
 
   const loadUsers = useCallback(async () => {
     setIsLoading(true)

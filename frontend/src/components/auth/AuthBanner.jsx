@@ -1,43 +1,55 @@
-import { AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
+import AlertCard from '../ui/AlertCard.jsx'
+import { ALERT_DURATION_MS } from '../../constants/alerts.js'
+import { toErrorText } from '../../utils/apiError.js'
 
-const bannerStyles = {
-  success: {
-    wrapper: 'border-emerald-200 bg-emerald-50 text-emerald-800',
-    icon: 'text-emerald-600',
-    title: 'text-emerald-900',
-    text: 'text-emerald-700',
-    Icon: CheckCircle2,
-  },
-  error: {
-    wrapper: 'border-rose-200 bg-rose-50 text-rose-700',
-    icon: 'text-rose-600',
-    title: 'text-rose-900',
-    text: 'text-rose-700',
-    Icon: AlertTriangle,
-  },
-}
+const VALID_TYPES = new Set(['success', 'error'])
 
-export default function AuthBanner({ type, title, message, className = '' }) {
-  if (!type || !message) {
+export default function AuthBanner({
+  type,
+  title,
+  message,
+  className = '',
+  duration = ALERT_DURATION_MS,
+}) {
+  const text = toErrorText(message)
+  const [visible, setVisible] = useState(Boolean(VALID_TYPES.has(type) && text))
+
+  useEffect(() => {
+    if (!VALID_TYPES.has(type) || !text) {
+      setVisible(false)
+      return undefined
+    }
+
+    setVisible(true)
+
+    if (!duration) {
+      return undefined
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setVisible(false)
+    }, duration)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [type, text, title, duration])
+
+  if (!visible || !VALID_TYPES.has(type) || !text) {
     return null
   }
 
-  const styles = bannerStyles[type]
-  if (!styles) {
-    return null
-  }
-
-  const Icon = styles.Icon
-
-  return (
-    <div className={`rounded-2xl border px-4 py-4 text-sm shadow-sm ${styles.wrapper} ${className}`}>
-      <div className="flex items-start gap-3">
-        <Icon className={`mt-0.5 h-5 w-5 shrink-0 ${styles.icon}`} />
-        <div>
-          {title ? <p className={`font-semibold ${styles.title}`}>{title}</p> : null}
-          <p className={`mt-0.5 leading-relaxed ${styles.text}`}>{message}</p>
-        </div>
+  const banner = (
+    <div className="pointer-events-none fixed inset-x-0 top-4 z-[200] flex justify-center px-4">
+      <div className={`pointer-events-auto w-full max-w-md ${className}`}>
+        <AlertCard type={type} title={title} message={text} onDismiss={() => setVisible(false)} />
       </div>
     </div>
   )
+
+  if (typeof document === 'undefined') {
+    return banner
+  }
+
+  return createPortal(banner, document.body)
 }

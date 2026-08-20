@@ -27,6 +27,15 @@ client.interceptors.request.use((config) => {
   return config
 })
 
+const isAuthTokenRequest = (config) => {
+  const url = String(config?.url || '')
+  return (
+    url.includes('/auth/jwt/create/') ||
+    url.includes('/auth/jwt/refresh/') ||
+    url.includes('/auth/jwt/verify/')
+  )
+}
+
 // Rafraîchir le token automatiquement en cas de 401 Unauthorized
 client.interceptors.response.use(
   (response) => response,
@@ -34,7 +43,13 @@ client.interceptors.response.use(
     const originalRequest = error.config
     const status = error.response?.status
 
-    if (status === 401 && !originalRequest._retry && !originalRequest.skipAuthRefresh) {
+    if (
+      status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !originalRequest.skipAuthRefresh &&
+      !isAuthTokenRequest(originalRequest)
+    ) {
       originalRequest._retry = true
       const refreshToken = localStorage.getItem('refreshToken')
 
