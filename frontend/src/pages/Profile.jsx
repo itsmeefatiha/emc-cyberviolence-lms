@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Edit3,
   Check,
@@ -11,6 +11,9 @@ import {
 import client from '../api/client'
 import { useAuth } from '../context/AuthContext.jsx'
 import { resolveBackendUrl } from '../utils/courseHelpers.js'
+import { getApiErrorMessage } from '../utils/apiError.js'
+import useAutoDismiss from '../hooks/useAutoDismiss.js'
+import { PROFIL_OPTIONS, getProfilLabel } from '../constants/profiles.js'
 
 export default function Profile() {
   const { refreshUser } = useAuth()
@@ -19,6 +22,11 @@ export default function Profile() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [error, setError] = useState(null)
   const [successMsg, setSuccessMsg] = useState(null)
+
+  const clearError = useCallback(() => setError(null), [])
+  const clearSuccess = useCallback(() => setSuccessMsg(null), [])
+  useAutoDismiss(error, clearError)
+  useAutoDismiss(successMsg, clearSuccess)
 
   // Données utilisateur
   const [user, setUser] = useState(null)
@@ -77,12 +85,9 @@ export default function Profile() {
       } catch {
         /* ignore */
       }
-      setTimeout(() => setSuccessMsg(null), 4000)
     } catch (err) {
       console.error('Erreur mise à jour profil:', err)
-      const msg =
-        err?.response?.data?.detail ||
-        'Erreur lors de la mise à jour de vos informations.'
+      const msg = getApiErrorMessage(err, 'Erreur lors de la mise à jour de vos informations.')
       setError(msg)
     } finally {
       setSaving(false)
@@ -113,13 +118,8 @@ export default function Profile() {
         /* ignore */
       }
       setSuccessMsg('Photo de profil mise à jour !')
-      setTimeout(() => setSuccessMsg(null), 4000)
     } catch (err) {
-      setError(
-        err?.response?.data?.photo?.[0] ||
-          err?.response?.data?.detail ||
-          "Échec de l'upload."
-      )
+      setError(getApiErrorMessage(err, "Échec de l'upload."))
     } finally {
       setUploadingPhoto(false)
       event.target.value = ''
@@ -206,7 +206,7 @@ export default function Profile() {
                 : user?.username}
             </h2>
             <p className="mt-0.5 text-xs font-semibold text-slate-500">
-              {user?.profil_professionnel || 'Apprenant'}
+              {getProfilLabel(user?.profil_professionnel, 'Apprenant')}
             </p>
             <div className="mt-2 flex items-center gap-2">
               <span className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 text-[11px] font-bold text-[#243491]">
@@ -386,7 +386,15 @@ export default function Profile() {
                 <span>Annuler</span>
               </button>
               <button
-                onClick={() => handleSave(professionalData, setEditingProfessional)}
+                onClick={() =>
+                  handleSave(
+                    {
+                      specialite: professionalData.specialite?.trim() || null,
+                      profil_professionnel: professionalData.profil_professionnel || null,
+                    },
+                    setEditingProfessional,
+                  )
+                }
                 disabled={saving}
                 className="inline-flex items-center gap-1 rounded-xl bg-[#243491] px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-[#1c2975]"
               >
@@ -406,7 +414,7 @@ export default function Profile() {
             <div>
               <p className="text-[11px] font-semibold text-slate-400">Profil Cible</p>
               <p className="mt-1 text-xs font-bold text-slate-800">
-                {user?.profil_professionnel || 'Non spécifié'}
+                {getProfilLabel(user?.profil_professionnel)}
               </p>
             </div>
             <div>
@@ -447,10 +455,11 @@ export default function Profile() {
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-800 focus:border-[#243491] focus:outline-none"
               >
                 <option value="">Sélectionner...</option>
-                <option value="EDUCATEUR">Éducateur / Enseignant</option>
-                <option value="PARENT">Parent</option>
-                <option value="PROFESSIONNEL">Professionnel de Santé/Social</option>
-                <option value="ELEVE">Élève / Étudiant</option>
+                {PROFIL_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
 
