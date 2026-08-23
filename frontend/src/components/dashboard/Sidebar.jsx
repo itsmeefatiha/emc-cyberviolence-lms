@@ -4,7 +4,6 @@ import {
   BarChart3,
   BookOpen,
   Compass,
-  LayoutDashboard,
   Users,
   Home,
   Video,

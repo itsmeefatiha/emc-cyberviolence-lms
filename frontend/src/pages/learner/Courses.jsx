@@ -1,15 +1,12 @@
 // src/pages/learner/Courses.jsx
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Search,
   BookOpen,
   Layers,
-  Users,
   CheckCircle2,
   FileText,
   ChevronRight,
-  RotateCcw,
   Heart,
   Loader2,
 } from 'lucide-react'
@@ -72,8 +69,6 @@ export default function LearnerCourses() {
   const [courses, setCourses] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [searchTerm, setSearchTerm] = useState('')
-  const [profileFilter, setProfileFilter] = useState('ALL')
   const [favoritingId, setFavoritingId] = useState(null)
 
   const fetchCourses = async () => {
@@ -119,71 +114,18 @@ export default function LearnerCourses() {
     }
   }
 
-  const filteredCourses = useMemo(() => {
-    return courses.filter((course) => {
-      const matchesSearch =
-        course.titre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.description.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesProfile = profileFilter === 'ALL' || course.profil_cible === profileFilter
-      return matchesSearch && matchesProfile
-    })
-  }, [courses, searchTerm, profileFilter])
-
   return (
     <div className="space-y-6">
-      {/* 1. EN-TÊTE DE LA PAGE */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2.5">
-            
             Parcours de Formation
           </h1>
           <p className="text-xs font-medium text-slate-500 mt-1">
             Explorez le catalogue des formations disponibles et accédez à vos contenus pédagogiques.
           </p>
         </div>
-
-        {/* <button
-          onClick={fetchCourses}
-          disabled={loading}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50"
-        >
-          <RotateCcw className={`h-3.5 w-3.5 text-slate-400 ${loading ? 'animate-spin' : ''}`} />
-          <span>Actualiser</span>
-        </button> */}
       </div>
-
-      {/* 3. BARRE DE RECHERCHE ET FILTRES 
-      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Rechercher une formation, un sujet..."
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2 pl-10 pr-4 text-xs font-medium text-slate-800 placeholder-slate-400 outline-none transition-colors focus:border-[#243491] focus:bg-white"
-          />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-1.5 text-xs font-semibold text-slate-600">
-            <Users className="h-3.5 w-3.5 text-slate-400" />
-            <select
-              value={profileFilter}
-              onChange={(event) => setProfileFilter(event.target.value)}
-              className="bg-transparent outline-none"
-            >
-              <option value="ALL">Tous les profils cibles</option>
-              <option value="EDUCATEUR">Éducateur</option>
-              <option value="FORCES_ORDRE">Forces de l'ordre</option>
-              <option value="MAGISTRAT">Magistrat</option>
-              <option value="ASSISTANT_SOCIAL">Assistant social</option>
-              <option value="AUTRE">Autre</option>
-            </select>
-          </div>
-        </div>
-      </div>*/}
 
       {/* 4. MESSAGES DE STATUT / ERREUR */}
       {error && (
@@ -202,7 +144,7 @@ export default function LearnerCourses() {
             />
           ))}
         </div>
-      ) : filteredCourses.length === 0 ? (
+      ) : courses.length === 0 ? (
         <div className="rounded-2xl border border-slate-200/80 bg-white p-12 text-center">
           <BookOpen className="mx-auto h-10 w-10 text-slate-300" />
           <h3 className="mt-3 text-sm font-bold text-slate-900">Aucun parcours trouvé</h3>
@@ -212,7 +154,7 @@ export default function LearnerCourses() {
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
-          {filteredCourses.map((course) => (
+          {courses.map((course) => (
             <div
               key={course.id}
               className="group flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/80 bg-white transition-all hover:border-[#243491]/40 hover:shadow-md"
