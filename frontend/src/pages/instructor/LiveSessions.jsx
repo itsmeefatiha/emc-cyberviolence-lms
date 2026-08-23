@@ -237,8 +237,7 @@ export default function InstructorLiveSessions() {
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900">Sessions live</h1>
           <p className="mt-1 max-w-2xl text-sm text-slate-500">
-            Programmez des formations en direct ciblées par profil. La visioconférence est
-            intégrée à la plateforme : aucune outil Zoom/Meet à configurer.
+            Programmez des formations en direct ciblées par profil.
           </p>
         </div>
         <button

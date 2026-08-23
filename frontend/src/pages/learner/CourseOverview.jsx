@@ -99,6 +99,7 @@ export default function CourseOverview() {
   }, [parcoursId])
 
   const isEnrolled = course?.is_enrolled || summary?.is_enrolled || false
+  const isCompleted = Boolean(course?.est_termine || summary?.est_termine)
   const isFavorite = course?.is_favorite || false
   const curriculum = useMemo(() => flattenCurriculum(course?.modules || []), [course])
   const firstItem = curriculum[0]
@@ -205,11 +206,15 @@ export default function CourseOverview() {
             <span className="rounded-lg bg-white/15 px-2.5 py-1">
               {PROFIL_LABELS[course.profil_cible] || course.profil_cible}
             </span>
-            {isEnrolled && (
+            {isCompleted ? (
+              <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/20 px-2.5 py-1 text-emerald-100">
+                <CheckCircle2 className="h-3 w-3" /> Terminé
+              </span>
+            ) : isEnrolled ? (
               <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/20 px-2.5 py-1 text-emerald-100">
                 <CheckCircle2 className="h-3 w-3" /> Inscrit
               </span>
-            )}
+            ) : null}
           </div>
           <h1 className="mt-4 text-3xl font-bold tracking-tight">{course.titre}</h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/85">{course.description}</p>
@@ -239,7 +244,7 @@ export default function CourseOverview() {
                 onClick={handleContinue}
                 className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-bold text-[#243491] transition hover:bg-slate-100"
               >
-                Continuer le parcours
+                {isCompleted ? 'Parcours terminé' : 'Continuer le parcours'}
                 <ChevronRight className="h-4 w-4" />
               </button>
             ) : (

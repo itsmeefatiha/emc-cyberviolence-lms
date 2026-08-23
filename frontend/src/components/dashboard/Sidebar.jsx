@@ -16,14 +16,14 @@ import { getSidebarLayout } from '../../utils/sidebar.js'
 
 const NAV_CONFIG = {
   APPRENANT: [
-    { name: 'Tableau de bord', icon: LayoutDashboard, path: '/dashboard' },
+    { name: 'Tableau de bord', icon: Home, path: '/dashboard' },
     { name: 'Mes formations', icon: BookOpen, path: '/my-courses' },
     { name: 'Sessions live', icon: Video, path: '/live-sessions' },
     { name: 'Certificats', icon: Award, path: '/certificates' },
     { name: 'Explorer', icon: Compass, path: '/browse' },
   ],
   FORMATEUR: [
-    { name: 'Tableau de bord', icon: LayoutDashboard, path: '/instructor/dashboard' },
+    { name: 'Tableau de bord', icon: Home, path: '/instructor/dashboard' },
     { name: 'Constructeur de parcours', icon: BookOpen, path: '/instructor/courses' },
     { name: 'Sessions live', icon: Video, path: '/instructor/live-sessions' },
     { name: 'Suivi des apprenants', icon: BarChart3, path: '/instructor/analytics' },

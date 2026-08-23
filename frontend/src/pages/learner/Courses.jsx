@@ -63,6 +63,7 @@ const normalizeCourse = (course) => ({
   date_creation: formatDate(course.date_creation),
   is_enrolled: Boolean(course.is_enrolled),
   is_favorite: Boolean(course.is_favorite),
+  est_termine: Boolean(course.est_termine),
   modules: course.modules,
 })
 
@@ -142,17 +143,17 @@ export default function LearnerCourses() {
           </p>
         </div>
 
-        <button
+        {/* <button
           onClick={fetchCourses}
           disabled={loading}
           className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50"
         >
           <RotateCcw className={`h-3.5 w-3.5 text-slate-400 ${loading ? 'animate-spin' : ''}`} />
           <span>Actualiser</span>
-        </button>
+        </button> */}
       </div>
 
-      {/* 3. BARRE DE RECHERCHE ET FILTRES */}
+      {/* 3. BARRE DE RECHERCHE ET FILTRES 
       <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -182,7 +183,7 @@ export default function LearnerCourses() {
             </select>
           </div>
         </div>
-      </div>
+      </div>*/}
 
       {/* 4. MESSAGES DE STATUT / ERREUR */}
       {error && (
@@ -250,7 +251,11 @@ export default function LearnerCourses() {
                   <span className="rounded-lg bg-indigo-50 px-2.5 py-1 text-[11px] font-bold text-[#243491]">
                     {course.profil_cible_label}
                   </span>
-                  {course.is_enrolled ? (
+                  {course.est_termine ? (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                      <CheckCircle2 className="h-3 w-3" /> Terminé
+                    </span>
+                  ) : course.is_enrolled ? (
                     <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
                       <CheckCircle2 className="h-3 w-3" /> Inscrit
                     </span>
@@ -297,9 +302,19 @@ export default function LearnerCourses() {
 
                   <button
                     onClick={() => handleOpenCourse(course)}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-[#243491] px-4 py-2 text-xs font-bold text-white transition-all hover:bg-[#1c2975] hover:shadow-sm"
+                    className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white transition-all hover:shadow-sm ${
+                      course.est_termine
+                        ? 'bg-emerald-600 hover:bg-emerald-700'
+                        : 'bg-[#243491] hover:bg-[#1c2975]'
+                    }`}
                   >
-                    <span>{course.is_enrolled ? 'Continuer' : 'Voir le parcours'}</span>
+                    <span>
+                      {course.est_termine
+                        ? 'Terminé'
+                        : course.is_enrolled
+                          ? 'Continuer'
+                          : 'Voir le parcours'}
+                    </span>
                     <ChevronRight className="h-3.5 w-3.5" />
                   </button>
                 </div>

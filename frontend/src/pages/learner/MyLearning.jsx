@@ -10,7 +10,7 @@ import {
   Award,
 } from 'lucide-react'
 import { getMyLearning, toggleFavorite } from '../../api/progression.js'
-import { resolveBackendUrl } from '../../utils/courseHelpers.js'
+import { resolveBackendUrl, isPublishedParcours } from '../../utils/courseHelpers.js'
 
 const COVER_FALLBACKS = ['bg-indigo-50', 'bg-sky-50', 'bg-amber-50', 'bg-emerald-50', 'bg-rose-50']
 
@@ -161,9 +161,9 @@ export default function MyLearning() {
     }
   }
 
-  const enrolled = data?.enrolled || []
-  const completed = data?.completed || []
-  const favorites = data?.favorites || []
+  const enrolled = (data?.enrolled || []).filter(isPublishedParcours)
+  const completed = (data?.completed || []).filter(isPublishedParcours)
+  const favorites = (data?.favorites || []).filter(isPublishedParcours)
   const list =
     tab === 'enrolled' ? enrolled : tab === 'completed' ? completed : favorites
 
