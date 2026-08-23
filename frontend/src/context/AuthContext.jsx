@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { getCurrentUser, loginUser, logoutUser, registerUser } from '../api/auth.js'
+import { getApiErrorMessage } from '../utils/apiError.js'
 
 const AuthContext = createContext(null)
 
@@ -10,12 +11,7 @@ const getStoredTokens = () => ({
 })
 
 const getFriendlyAuthError = (error, fallbackMessage) =>
-  error?.response?.data?.detail ||
-  error?.response?.data?.non_field_errors?.[0] ||
-  error?.response?.data?.email?.[0] ||
-  error?.response?.data?.password?.[0] ||
-  error?.message ||
-  fallbackMessage
+  getApiErrorMessage(error, fallbackMessage)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
@@ -80,7 +76,6 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(
     async (credentials) => {
-      setLoading(true)
       setError(null)
 
       try {
@@ -102,8 +97,6 @@ export function AuthProvider({ children }) {
         clearSession()
         setError(getFriendlyAuthError(loginError, 'Impossible de se connecter.'))
         throw loginError
-      } finally {
-        setLoading(false)
       }
     },
     [clearSession, persistSession],
@@ -111,7 +104,6 @@ export function AuthProvider({ children }) {
 
   const register = useCallback(
     async (userData) => {
-      setLoading(true)
       setError(null)
 
       try {
@@ -127,8 +119,6 @@ export function AuthProvider({ children }) {
       } catch (registerError) {
         setError(getFriendlyAuthError(registerError, 'Impossible de créer le compte.'))
         throw registerError
-      } finally {
-        setLoading(false)
       }
     },
     [persistSession],

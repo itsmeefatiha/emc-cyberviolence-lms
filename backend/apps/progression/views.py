@@ -7,11 +7,29 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from apps.courses.models import Lecon, Module, Parcours
+from apps.courses.models import Lecon, Module, Parcours, StatutPublication
 from django.shortcuts import get_object_or_404
 
 from .models import ActiviteJournaliere, Favori, Inscription, Progression, StatutProgression
 from .serializers import ProgressionSerializer
+
+
+def _is_manager_user(user):
+    role = getattr(user, 'role', None)
+    return bool(user.is_staff or role in ('ADMIN', 'FORMATEUR'))
+
+
+def _published_parcours_queryset(queryset, user):
+    """Les apprenants ne voient que les parcours publiés dans leurs listes."""
+    if _is_manager_user(user):
+        return queryset
+    return queryset.filter(statut=StatutPublication.PUBLIE)
+
+
+def _learner_can_access_parcours(user, parcours):
+    if _is_manager_user(user):
+        return True
+    return parcours.statut == StatutPublication.PUBLIE
 
 
 def _format_duration_display(seconds):
@@ -242,8 +260,11 @@ class ProgressionViewSet(viewsets.ModelViewSet):
         parcours_ids |= set(
             Inscription.objects.filter(apprenant=user).values_list('parcours_id', flat=True)
         )
-        parcours_qs = Parcours.objects.select_related('formateur').prefetch_related('modules__lecons').filter(
-            id__in=parcours_ids
+        parcours_qs = _published_parcours_queryset(
+            Parcours.objects.select_related('formateur')
+            .prefetch_related('modules__lecons')
+            .filter(id__in=parcours_ids),
+            user,
         )
 
         parcours_summaries = [
@@ -412,9 +433,12 @@ class ProgressionViewSet(viewsets.ModelViewSet):
         all_ids = enrolled_ids | favorite_ids
         parcours_map = {
             p.id: p
-            for p in Parcours.objects.filter(id__in=all_ids)
-            .select_related('formateur')
-            .prefetch_related('modules__lecons')
+            for p in _published_parcours_queryset(
+                Parcours.objects.filter(id__in=all_ids)
+                .select_related('formateur')
+                .prefetch_related('modules__lecons'),
+                user,
+            )
         }
 
         enrolled = [
@@ -489,6 +513,8 @@ class ProgressionViewSet(viewsets.ModelViewSet):
         )
         results = []
         for favori in favoris:
+            if not _learner_can_access_parcours(request.user, favori.parcours):
+                continue
             summary = self._build_parcours_summary(request.user, favori.parcours)
             summary['date_ajout_favori'] = favori.date_ajout
             results.append(summary)
@@ -717,12 +743,12 @@ class ProgressionViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='me/resume')
     def me_resume(self, request):
-        progression = (
-            self._progression_queryset()
-            .filter(apprenant=request.user)
-            .order_by('-date_dernier_activite', '-date_debut')
-            .first()
-        )
+        progression_qs = self._progression_queryset().filter(apprenant=request.user)
+        if not _is_manager_user(request.user):
+            progression_qs = progression_qs.filter(
+                lecon__module__parcours__statut=StatutPublication.PUBLIE
+            )
+        progression = progression_qs.order_by('-date_dernier_activite', '-date_debut').first()
 
         if not progression:
             return Response({'resume_disponible': False})
@@ -747,6 +773,11 @@ class ProgressionViewSet(viewsets.ModelViewSet):
             Parcours.objects.select_related('formateur').prefetch_related('modules__lecons'),
             id=parcours_id,
         )
+        if not _learner_can_access_parcours(request.user, parcours):
+            return Response(
+                {'detail': "Ce parcours n'est pas disponible."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         return Response(self._build_parcours_summary(request.user, parcours))
 
     @action(detail=False, methods=['get'], url_path=r'module/(?P<module_id>[^/.]+)/summary')

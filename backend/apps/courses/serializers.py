@@ -636,6 +636,14 @@ def _user_is_enrolled(user, parcours):
     ).exists()
 
 
+def _user_has_completed_parcours(user, parcours):
+    if not user or not user.is_authenticated:
+        return False
+    from apps.quizzes.services import is_parcours_completed
+
+    return is_parcours_completed(user, parcours)
+
+
 def _user_has_favorite(user, parcours):
     if not user or not user.is_authenticated:
         return False
@@ -736,6 +744,7 @@ class ParcoursListSerializer(serializers.ModelSerializer):
     nombre_lecons = serializers.SerializerMethodField()
     is_enrolled = serializers.SerializerMethodField()
     is_favorite = serializers.SerializerMethodField()
+    est_termine = serializers.SerializerMethodField()
 
     class Meta:
         model = Parcours
@@ -755,6 +764,7 @@ class ParcoursListSerializer(serializers.ModelSerializer):
             'nombre_lecons',
             'is_enrolled',
             'is_favorite',
+            'est_termine',
             'ordre',
             'date_creation',
         ]
@@ -773,6 +783,12 @@ class ParcoursListSerializer(serializers.ModelSerializer):
         if not request:
             return False
         return _user_has_favorite(request.user, obj)
+
+    def get_est_termine(self, obj):
+        request = self.context.get('request')
+        if not request:
+            return False
+        return _user_has_completed_parcours(request.user, obj)
 
     def get_formateur_nom(self, obj):
         return _formateur_display_name(obj.formateur)
@@ -795,6 +811,7 @@ class ParcoursDetailSerializer(serializers.ModelSerializer):
     modules = ModuleSerializer(many=True, read_only=True)
     is_enrolled = serializers.SerializerMethodField()
     is_favorite = serializers.SerializerMethodField()
+    est_termine = serializers.SerializerMethodField()
 
     class Meta:
         model = Parcours
@@ -813,6 +830,7 @@ class ParcoursDetailSerializer(serializers.ModelSerializer):
             'modules',
             'is_enrolled',
             'is_favorite',
+            'est_termine',
             'date_creation',
             'date_modification',
         ]
@@ -828,6 +846,12 @@ class ParcoursDetailSerializer(serializers.ModelSerializer):
         if not request:
             return False
         return _user_has_favorite(request.user, obj)
+
+    def get_est_termine(self, obj):
+        request = self.context.get('request')
+        if not request:
+            return False
+        return _user_has_completed_parcours(request.user, obj)
 
     def get_formateur_nom(self, obj):
         return _formateur_display_name(obj.formateur)

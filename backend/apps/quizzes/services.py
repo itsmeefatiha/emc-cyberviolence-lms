@@ -259,11 +259,14 @@ def generate_certificate_pdf(certificat: Certificat):
     return certificat
 
 
-@transaction.atomic
-def issue_certificate_if_completed(apprenant, parcours: Parcours):
+def is_parcours_completed(apprenant, parcours: Parcours) -> bool:
+    """True si toutes les leçons sont terminées et tous les quiz validés."""
+    if not apprenant or not parcours:
+        return False
+
     total_lecons = Lecon.objects.filter(module__parcours=parcours).count()
     if total_lecons == 0:
-        return None
+        return False
 
     completed_lecons = Progression.objects.filter(
         apprenant=apprenant,
@@ -272,9 +275,8 @@ def issue_certificate_if_completed(apprenant, parcours: Parcours):
     ).count()
 
     if completed_lecons < total_lecons:
-        return None
+        return False
 
-    # Tous les quiz du parcours doivent être réussis
     quizzes = Quiz.objects.filter(module__parcours=parcours)
     quiz_ids = list(quizzes.values_list('id', flat=True))
     if quiz_ids:
@@ -286,7 +288,15 @@ def issue_certificate_if_completed(apprenant, parcours: Parcours):
             ).values_list('quiz_id', flat=True)
         )
         if len(passed_quiz_ids) < len(quiz_ids):
-            return None
+            return False
+
+    return True
+
+
+@transaction.atomic
+def issue_certificate_if_completed(apprenant, parcours: Parcours):
+    if not is_parcours_completed(apprenant, parcours):
+        return None
 
     certificat, created = Certificat.objects.get_or_create(
         apprenant=apprenant,

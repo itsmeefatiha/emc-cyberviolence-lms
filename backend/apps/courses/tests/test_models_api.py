@@ -139,3 +139,25 @@ class TestParcoursAPI:
             format='json',
         )
         assert lecon_resp.status_code == status.HTTP_201_CREATED
+
+    def test_list_includes_est_termine_for_completed_parcours(self, api_client):
+        from apps.progression.factories import ProgressionFactory
+        from apps.progression.models import StatutProgression
+
+        apprenant = UserFactory()
+        parcours = ParcoursFactory()
+        lecon = LeconFactory(module__parcours=parcours)
+        ProgressionFactory(
+            apprenant=apprenant,
+            lecon=lecon,
+            statut=StatutProgression.TERMINE,
+        )
+        api_client.force_authenticate(user=apprenant)
+
+        response = api_client.get(PARCOURS_URL)
+        assert response.status_code == status.HTTP_200_OK
+        items = response.data if isinstance(response.data, list) else response.data.get('results', [])
+        match = next((item for item in items if str(item['id']) == str(parcours.id)), None)
+        assert match is not None
+        assert match['est_termine'] is True
+        assert match['is_enrolled'] is True

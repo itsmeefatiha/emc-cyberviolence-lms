@@ -13,7 +13,7 @@ import {
 import { useAuth } from '../../context/AuthContext.jsx'
 import { getMySummary, toggleFavorite } from '../../api/progression.js'
 import { listCertificats } from '../../api/quizzes.js'
-import { resolveBackendUrl } from '../../utils/courseHelpers.js'
+import { resolveBackendUrl, isPublishedParcours } from '../../utils/courseHelpers.js'
 import ActivityChart from '../../components/dashboard/ActivityChart.jsx'
 import { UpcomingSessionsWidget } from './LiveSessions.jsx'
 import { getHomePath } from '../../utils/navigation.js'
@@ -82,12 +82,15 @@ export default function LearnerDashboard() {
   }, [load, role])
 
   const ongoing = useMemo(
-    () => (summary?.parcours || []).filter((p) => !p.est_termine && p.is_enrolled !== false),
-    [summary]
+    () =>
+      (summary?.parcours || []).filter(
+        (p) => isPublishedParcours(p) && !p.est_termine && p.is_enrolled !== false,
+      ),
+    [summary],
   )
   const completed = useMemo(
-    () => (summary?.parcours || []).filter((p) => p.est_termine),
-    [summary]
+    () => (summary?.parcours || []).filter((p) => isPublishedParcours(p) && p.est_termine),
+    [summary],
   )
 
   const handleFavorite = async (parcoursId) => {
@@ -133,6 +136,16 @@ export default function LearnerDashboard() {
 
   return (
     <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
+          Bonjour{user?.first_name ? `, ${user.first_name}` : ''}
+        </h1>
+        <p className="mt-1 text-sm text-slate-500">
+          Bienvenue sur EMC E-Formation. Retrouvez vos parcours en cours, vos progrès et les
+          prochaines sessions live.
+        </p>
+      </div>
+
       <div className="grid gap-5 sm:grid-cols-3">
         <MetricCard
           icon={Clock}
@@ -154,8 +167,8 @@ export default function LearnerDashboard() {
         />
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-5 lg:items-start">
-        <div className="space-y-5 lg:col-span-3">
+      <div className="grid gap-5 lg:grid-cols-3 lg:items-start">
+        <div className="space-y-5 lg:col-span-2">
           <div className={`${CARD} space-y-4`}>
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-slate-900">En cours</h2>
@@ -172,7 +185,7 @@ export default function LearnerDashboard() {
                 </Link>
               </div>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {ongoing.slice(0, 3).map((course, idx) => {
                   const imageUrl = resolveBackendUrl(course.image)
                   const pct = Math.round(course.pourcentage || 0)
@@ -263,14 +276,14 @@ export default function LearnerDashboard() {
               </div>
             </div>
           ) : null}
-
-          <ActivityChart />
         </div>
 
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-1">
           <UpcomingSessionsWidget />
         </div>
       </div>
+
+      <ActivityChart className="w-full" />
     </div>
   )
 }

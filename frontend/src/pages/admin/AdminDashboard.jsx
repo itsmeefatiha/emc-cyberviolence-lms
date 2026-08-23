@@ -222,13 +222,13 @@ export default function AdminDashboard() {
             Vue d’ensemble des statistiques de la plateforme EMC E-Formation.
           </p>
         </div>
-        <button
+        {/* <button
           type="button"
           onClick={load}
           className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"
         >
           Actualiser
-        </button>
+        </button> */}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

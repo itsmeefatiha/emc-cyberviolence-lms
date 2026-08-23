@@ -18,6 +18,7 @@ class ParcoursFactory(factory.django.DjangoModelFactory):
 
     class Params:
         brouillon = factory.Trait(statut=StatutPublication.BROUILLON)
+        archive = factory.Trait(statut=StatutPublication.ARCHIVE)
 
 
 class ModuleFactory(factory.django.DjangoModelFactory):

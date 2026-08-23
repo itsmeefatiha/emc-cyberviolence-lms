@@ -56,6 +56,7 @@ function createInitialDb() {
     users: [USERS.learner, USERS.instructor, USERS.admin].map((user) => ({ ...user })),
     enrolledIds: new Set(),
     favoriteIds: new Set(),
+    completedIds: new Set(),
     parcours: [
       {
         id: 'parcours-1',
@@ -182,6 +183,7 @@ export function resetDb() {
   db.users = next.users
   db.enrolledIds = next.enrolledIds
   db.favoriteIds = next.favoriteIds
+  db.completedIds = next.completedIds
   db.parcours = next.parcours
   db.conversations = next.conversations
   db.messages = next.messages

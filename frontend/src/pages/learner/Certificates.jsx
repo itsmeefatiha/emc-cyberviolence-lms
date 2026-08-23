@@ -68,14 +68,13 @@ export default function Certificates() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="flex items-center gap-2.5 text-2xl font-bold text-slate-900">
-            <Award className="h-6 w-6 text-[#243491]" />
             Mes Certifications
           </h1>
           <p className="mt-1 text-xs font-medium text-slate-500">
             Certificats obtenus après validation complète de vos parcours.
           </p>
         </div>
-        <button
+        {/*<button
           type="button"
           onClick={load}
           disabled={loading}
@@ -83,7 +82,7 @@ export default function Certificates() {
         >
           <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
           Actualiser
-        </button>
+        </button>*/}
       </div>
 
       {error && (

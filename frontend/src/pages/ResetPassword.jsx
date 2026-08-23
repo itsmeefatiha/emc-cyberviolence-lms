@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Link as RouterLink, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { CheckCircle2, Eye, EyeOff, Info } from 'lucide-react'
 import { confirmPasswordReset } from '../api/auth.js'
@@ -8,6 +8,8 @@ import AuthField from '../components/auth/AuthField.jsx'
 import AuthLayout from '../components/auth/AuthLayout.jsx'
 import AuthIllustration from '../assets/illustration.svg'
 import IconCap from '../assets/graduation-cap2.png'
+import { getApiErrorMessage } from '../utils/apiError.js'
+import useAutoDismiss from '../hooks/useAutoDismiss.js'
 
 const initialFormState = {
   new_password: '',
@@ -21,6 +23,8 @@ export default function ResetPassword() {
   const [form, setForm] = useState(initialFormState)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
+  const clearError = useCallback(() => setError(null), [])
+  useAutoDismiss(error, clearError)
 
   // États pour afficher/masquer chaque mot de passe
   const [showNewPassword, setShowNewPassword] = useState(false)
@@ -81,8 +85,7 @@ export default function ResetPassword() {
       })
     } catch (resetError) {
       setError(
-        resetError?.response?.data?.detail ||
-          'Impossible de réinitialiser le mot de passe.',
+        getApiErrorMessage(resetError, 'Impossible de réinitialiser le mot de passe.'),
       )
     } finally {
       setLoading(false)

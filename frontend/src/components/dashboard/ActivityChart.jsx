@@ -241,7 +241,7 @@ export default function ActivityChart({ className = '' }) {
         </div>
       </div>
 
-      <div className="relative h-36 w-full sm:h-40">
+      <div className="relative h-40 w-full sm:h-48">
         {loading ? (
           <div className="flex h-full items-center justify-center text-slate-400">
             <Loader2 className="h-5 w-5 animate-spin" />

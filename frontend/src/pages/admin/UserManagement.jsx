@@ -17,6 +17,7 @@ import {
   UserCheck,
 } from 'lucide-react'
 import { createUser, deleteUser, listUsers, updateUser } from '../../api/users.js'
+import useAutoDismiss from '../../hooks/useAutoDismiss.js'
 
 const EMPTY_FORM = {
   fullName: '',
@@ -89,6 +90,8 @@ export default function UserManagement() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [userForm, setUserForm] = useState(EMPTY_FORM)
+  const clearErrorMessage = useCallback(() => setErrorMessage(''), [])
+  useAutoDismiss(errorMessage, clearErrorMessage)
 
   const loadUsers = useCallback(async () => {
     setIsLoading(true)
@@ -346,7 +349,7 @@ export default function UserManagement() {
 
           <button
             onClick={openCreateModal}
-            className="flex items-center gap-2 rounded-xl bg-black px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-hover"
+            className="flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-hover"
           >
             <Plus className="h-4 w-4" />
             <span>Ajouter un utilisateur</span>
