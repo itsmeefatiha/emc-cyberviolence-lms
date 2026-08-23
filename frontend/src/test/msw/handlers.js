@@ -13,10 +13,13 @@ const requireAuth = () => {
   return null
 }
 
+const publishedParcours = (items) => items.filter((item) => item.statut === 'PUBLIE' || !item.statut)
+
 const withEnrollmentFlags = (parcours) => ({
   ...parcours,
   is_enrolled: db.enrolledIds.has(parcours.id),
   is_favorite: db.favoriteIds.has(parcours.id),
+  est_termine: db.completedIds.has(parcours.id),
 })
 
 const learningItem = (parcours, extra = {}) => ({
@@ -27,10 +30,14 @@ const learningItem = (parcours, extra = {}) => ({
   formateur_nom: parcours.formateur_nom,
   is_enrolled: db.enrolledIds.has(parcours.id),
   is_favorite: db.favoriteIds.has(parcours.id),
-  est_termine: false,
-  pourcentage: db.enrolledIds.has(parcours.id) ? 35 : 0,
+  est_termine: db.completedIds.has(parcours.id),
+  pourcentage: db.completedIds.has(parcours.id)
+    ? 100
+    : db.enrolledIds.has(parcours.id)
+      ? 35
+      : 0,
   total_quizzes: 1,
-  quizzes_reussis: 0,
+  quizzes_reussis: db.completedIds.has(parcours.id) ? 1 : 0,
   ...extra,
 })
 
@@ -203,7 +210,7 @@ export const handlers = [
   http.get(api('/v1/progression/me/summary/'), () => {
     const denied = requireAuth()
     if (denied) return denied
-    const enrolled = db.parcours.filter((item) => db.enrolledIds.has(item.id))
+    const enrolled = publishedParcours(db.parcours.filter((item) => db.enrolledIds.has(item.id)))
     return HttpResponse.json({
       parcours: enrolled.map((item) => learningItem(item)),
       lecons_terminees: enrolled.length ? 1 : 0,
@@ -220,10 +227,12 @@ export const handlers = [
   http.get(api('/v1/progression/me/learning/'), () => {
     const denied = requireAuth()
     if (denied) return denied
-    const enrolled = db.parcours.filter((item) => db.enrolledIds.has(item.id)).map((item) => learningItem(item))
-    const favorites = db.parcours
-      .filter((item) => db.favoriteIds.has(item.id))
-      .map((item) => learningItem(item))
+    const enrolled = publishedParcours(
+      db.parcours.filter((item) => db.enrolledIds.has(item.id)),
+    ).map((item) => learningItem(item))
+    const favorites = publishedParcours(
+      db.parcours.filter((item) => db.favoriteIds.has(item.id)),
+    ).map((item) => learningItem(item))
     return HttpResponse.json({
       enrolled,
       completed: [],
@@ -248,16 +257,18 @@ export const handlers = [
     const denied = requireAuth()
     if (denied) return denied
     const enrolled = db.enrolledIds.has(params.id)
+    const completed = db.completedIds.has(params.id)
     return HttpResponse.json({
       is_enrolled: enrolled,
-      pourcentage: enrolled ? 35 : 0,
+      est_termine: completed,
+      pourcentage: completed ? 100 : enrolled ? 35 : 0,
       modules: [
         {
           module_id: 'module-1',
           lecons: [
             {
               lecon_id: 'lecon-1',
-              statut: enrolled ? 'EN_COURS' : 'NON_COMMENCE',
+              statut: completed ? 'TERMINE' : enrolled ? 'EN_COURS' : 'NON_COMMENCE',
             },
           ],
         },

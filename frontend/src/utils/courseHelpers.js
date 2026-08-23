@@ -164,10 +164,17 @@ export const normalizeParcours = (parcours) => ({
   image: parcours.image || null,
   is_enrolled: Boolean(parcours.is_enrolled),
   is_favorite: Boolean(parcours.is_favorite),
+  est_termine: Boolean(parcours.est_termine),
   modules: (parcours.modules || [])
     .map(normalizeModule)
     .sort((a, b) => (a.ordre || 0) - (b.ordre || 0)),
 })
+
+/** Parcours visible dans le catalogue / Mes formations apprenant. */
+export const isPublishedParcours = (item) => {
+  const statut = item?.statut
+  return !statut || statut === 'PUBLIE'
+}
 
 /** Flat ordered list of curriculum items (lessons + quizzes) for navigation. */
 export const flattenCurriculum = (modules = []) => {

@@ -14,6 +14,7 @@ ENROLL_URL = '/api/v1/progression/enroll/'
 TRACK_URL = '/api/v1/progression/track/'
 FAVORITES_TOGGLE_URL = '/api/v1/progression/favorites/toggle/'
 SUMMARY_URL = '/api/v1/progression/me/summary/'
+LEARNING_URL = '/api/v1/progression/me/learning/'
 ACTIVITY_URL = '/api/v1/progression/me/activity/'
 
 
@@ -124,6 +125,55 @@ class TestProgressionAPI:
         api_client.force_authenticate(user=apprenant)
         response = api_client.get(SUMMARY_URL)
         assert response.status_code == status.HTTP_200_OK
+
+    def test_me_summary_hides_draft_and_archived_parcours(self, api_client):
+        apprenant = UserFactory()
+        published = ParcoursFactory()
+        draft = ParcoursFactory(brouillon=True)
+        archived = ParcoursFactory(archive=True)
+        InscriptionFactory(apprenant=apprenant, parcours=published)
+        InscriptionFactory(apprenant=apprenant, parcours=draft)
+        InscriptionFactory(apprenant=apprenant, parcours=archived)
+        ProgressionFactory(apprenant=apprenant, lecon=LeconFactory(module__parcours=draft))
+        ProgressionFactory(apprenant=apprenant, lecon=LeconFactory(module__parcours=archived))
+        api_client.force_authenticate(user=apprenant)
+
+        response = api_client.get(SUMMARY_URL)
+        assert response.status_code == status.HTTP_200_OK
+        parcours_ids = {item['parcours_id'] for item in response.data['parcours']}
+        assert str(published.id) in parcours_ids
+        assert str(draft.id) not in parcours_ids
+        assert str(archived.id) not in parcours_ids
+        assert Progression.objects.filter(apprenant=apprenant).count() >= 2
+
+    def test_me_learning_hides_draft_and_archived_parcours(self, api_client):
+        apprenant = UserFactory()
+        published = ParcoursFactory()
+        draft = ParcoursFactory(brouillon=True)
+        archived = ParcoursFactory(archive=True)
+        InscriptionFactory(apprenant=apprenant, parcours=published)
+        InscriptionFactory(apprenant=apprenant, parcours=draft)
+        ProgressionFactory(
+            apprenant=apprenant,
+            lecon=LeconFactory(module__parcours=archived),
+            statut=StatutProgression.EN_COURS,
+        )
+        FavoriFactory(apprenant=apprenant, parcours=archived)
+        api_client.force_authenticate(user=apprenant)
+
+        response = api_client.get(LEARNING_URL)
+        assert response.status_code == status.HTTP_200_OK
+        visible_ids = {
+            item['parcours_id']
+            for item in (
+                response.data.get('enrolled', [])
+                + response.data.get('completed', [])
+                + response.data.get('favorites', [])
+            )
+        }
+        assert str(published.id) in visible_ids
+        assert str(draft.id) not in visible_ids
+        assert str(archived.id) not in visible_ids
 
     def test_activity_endpoint(self, api_client):
         apprenant = UserFactory()
