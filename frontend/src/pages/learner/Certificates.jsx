@@ -3,7 +3,6 @@ import {
   Award,
   Download,
   Loader2,
-  RefreshCw,
   ShieldCheck,
   Calendar,
   BookOpen,
@@ -74,15 +73,6 @@ export default function Certificates() {
             Certificats obtenus après validation complète de vos parcours.
           </p>
         </div>
-        {/*<button
-          type="button"
-          onClick={load}
-          disabled={loading}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-          Actualiser
-        </button>*/}
       </div>
 
       {error && (
