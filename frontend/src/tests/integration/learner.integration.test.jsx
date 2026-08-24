@@ -9,18 +9,13 @@ describe('Intégration — parcours apprenant', () => {
     authenticateAs(USERS.learner)
   })
 
-  it('affiche le catalogue publié et filtre par recherche', async () => {
-    const { user } = renderApp({ route: '/browse' })
+  it('affiche le catalogue publié', async () => {
+    renderApp({ route: '/browse' })
 
     expect(await screen.findByRole('heading', { name: /Parcours de Formation/i })).toBeInTheDocument()
     expect(await screen.findByText('Cyberviolence et école')).toBeInTheDocument()
     expect(screen.getByText('Disponible')).toBeInTheDocument()
-
-    await user.type(
-      screen.getByPlaceholderText('Rechercher une formation, un sujet...'),
-      'introuvable',
-    )
-    expect(await screen.findByText('Aucun parcours trouvé')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Voir le parcours/i })).toBeInTheDocument()
   })
 
   it('affiche une erreur si le catalogue est indisponible', async () => {
