@@ -26,8 +26,6 @@ export class CatalogPage {
   constructor(page) {
     this.page = page
     this.heading = page.getByRole('heading', { name: /Parcours de Formation/i })
-    this.searchInput = page.getByPlaceholder('Rechercher une formation, un sujet...')
-    this.openCourseButton = page.getByRole('button', { name: 'Voir le parcours' })
     this.exploreLink = page.getByRole('link', { name: 'Explorer', exact: true })
   }
 
@@ -39,9 +37,9 @@ export class CatalogPage {
 
   /** @param {string} courseTitle */
   async openCourse(courseTitle) {
-    await this.searchInput.fill(courseTitle)
-    await expect(this.page.getByRole('heading', { name: courseTitle })).toBeVisible()
-    await this.openCourseButton.click()
+    const courseHeading = this.page.getByRole('heading', { name: courseTitle })
+    await expect(courseHeading).toBeVisible()
+    await courseHeading.click()
   }
 }
 
